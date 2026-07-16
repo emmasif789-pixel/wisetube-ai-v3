@@ -1,8 +1,36 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Youtube } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles, Youtube } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
+const YOUTUBE_REGEX =
+  /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/|embed\/|v\/)[\w-]{6,}|youtu\.be\/[\w-]{6,})(\S*)?$/i;
+
 export function Hero() {
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    const trimmed = url.trim();
+    if (!trimmed) {
+      toast.error("Please enter a YouTube URL.");
+      return;
+    }
+    if (!YOUTUBE_REGEX.test(trimmed)) {
+      toast.error("Please enter a valid YouTube video URL.");
+      return;
+    }
+    setLoading(true);
+    setTimeout(() => {
+      navigate({ to: "/report", search: { url: trimmed } });
+    }, 400);
+  };
+
   return (
     <section
       id="home"
@@ -66,7 +94,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.25 }}
-          onSubmit={(e) => e.preventDefault()}
+          onSubmit={handleSubmit}
           className="mx-auto mt-10 max-w-2xl"
         >
           <div className="group flex flex-col gap-2 rounded-2xl border border-border/70 bg-card/70 p-2 shadow-[var(--shadow-card)] backdrop-blur-xl transition-colors focus-within:border-primary/60 sm:flex-row sm:items-center sm:gap-1 sm:pr-2">
@@ -77,15 +105,29 @@ export function Hero() {
                 placeholder="Paste a YouTube video link…"
                 className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none sm:text-base"
                 aria-label="YouTube video URL"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                disabled={loading}
               />
             </div>
             <Button
               type="submit"
               size="lg"
+              disabled={loading}
               className="group/btn h-11 rounded-xl px-5 font-medium"
             >
-              Analyze Video
-              <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
+              {loading ? (
+                <>
+                  <Sparkles className="mr-1 h-4 w-4 animate-pulse" />
+                  Analyzing Video...
+                  <Loader2 className="ml-1 h-4 w-4 animate-spin" />
+                </>
+              ) : (
+                <>
+                  Analyze Video
+                  <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
+                </>
+              )}
             </Button>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
