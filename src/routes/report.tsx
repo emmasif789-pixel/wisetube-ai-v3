@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
+  BookOpen,
   Clock,
-  Gauge,
   ListTree,
   Map as MapIcon,
   MessagesSquare,
+  Play,
   Sparkles,
   ThumbsUp,
-  Youtube,
 } from "lucide-react";
 import { z } from "zod";
 import { Navbar } from "@/components/wistube/navbar";
@@ -18,6 +18,13 @@ import { Footer } from "@/components/wistube/footer";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatTimestamp, getYouTubeVideoId } from "@/lib/youtube";
+import { buildReport, type LearningReport, type SkipSegmentKind } from "@/lib/report-data";
+import {
+  YouTubePlayer,
+  type YouTubePlayerHandle,
+} from "@/components/wistube/youtube-player";
+import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ url: z.string().optional() });
 
@@ -35,6 +42,12 @@ const LOADING_MESSAGES = [
 
 function ReportPage() {
   const { url } = Route.useSearch();
+  const videoId = useMemo(() => (url ? getYouTubeVideoId(url) : null), [url]);
+  const report = useMemo(
+    () => (url && videoId ? buildReport(url, videoId) : null),
+    [url, videoId],
+  );
+
   const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState(6);
   const [msgIndex, setMsgIndex] = useState(0);
@@ -65,7 +78,7 @@ function ReportPage() {
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
       <AnimatePresence mode="wait">
-        {!ready ? (
+        {!ready || !report ? (
           <motion.div
             key="loading"
             initial={{ opacity: 0 }}
@@ -82,7 +95,7 @@ function ReportPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <Report url={url} />
+            <Report report={report} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -154,7 +167,30 @@ function ShimmerCard({ className = "" }: { className?: string }) {
   );
 }
 
-function Report({ url }: { url?: string }) {
+function Report({ report }: { report: LearningReport }) {
+  const playerRef = useRef<YouTubePlayerHandle>(null);
+  const [activeChapter, setActiveChapter] = useState<string | null>(null);
+  const [activeSegment, setActiveSegment] = useState<string | null>(null);
+  const timelineRef = useRef<HTMLOListElement>(null);
+
+  const jumpTo = (seconds: number) => {
+    playerRef.current?.seekTo(seconds, true);
+  };
+
+  const handleChapterClick = (chapterId: string, start: number) => {
+    setActiveChapter(chapterId);
+    jumpTo(start);
+    const el = timelineRef.current?.querySelector<HTMLElement>(
+      `[data-chapter="${chapterId}"]`,
+    );
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  const handleSegmentClick = (segmentId: string, start: number) => {
+    setActiveSegment(segmentId);
+    jumpTo(start);
+  };
+
   return (
     <section className="relative pt-32 pb-24 sm:pt-40">
       <div className="mx-auto max-w-5xl px-6">
@@ -169,28 +205,26 @@ function Report({ url }: { url?: string }) {
           </a>
         </Button>
 
-        {/* Video Header */}
+        {/* Video Header with embedded player */}
         <Card>
-          <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
-            <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/60 bg-secondary/40 sm:w-64">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Youtube className="h-10 w-10 text-muted-foreground/70" />
-              </div>
+          <div className="flex flex-col gap-5 p-6 lg:flex-row">
+            <div className="w-full lg:w-2/3">
+              <YouTubePlayer ref={playerRef} videoId={report.videoId} />
             </div>
             <div className="flex-1">
               <p className="text-xs uppercase tracking-wider text-primary">
                 Learning Report
               </p>
               <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                How to Learn Anything Faster
+                {report.title}
               </h1>
               <p className="mt-2 truncate text-sm text-muted-foreground">
-                {url ?? "youtube.com/watch?v=example"}
+                {report.channel} · {report.url}
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                <Badge>Education</Badge>
-                <Badge>18 min</Badge>
-                <Badge>English</Badge>
+                <Badge>{report.category}</Badge>
+                <Badge>{Math.round(report.durationSec / 60)} min</Badge>
+                <Badge>{report.language}</Badge>
               </div>
             </div>
           </div>
@@ -199,30 +233,91 @@ function Report({ url }: { url?: string }) {
         {/* Executive Summary */}
         <SectionTitle icon={Sparkles}>Executive Summary</SectionTitle>
         <Card>
-          <div className="space-y-3 p-6">
-            <Skeleton className="h-4 w-full bg-secondary/50" />
-            <Skeleton className="h-4 w-11/12 bg-secondary/50" />
-            <Skeleton className="h-4 w-9/12 bg-secondary/50" />
-            <Skeleton className="h-4 w-10/12 bg-secondary/50" />
-          </div>
+          <p className="p-6 text-sm leading-relaxed text-foreground/90 sm:text-base">
+            {report.executiveSummary}
+          </p>
         </Card>
 
         {/* Stats row */}
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard icon={Clock} label="Time Saved" value="12 min" hint="of 18 min video" />
-          <StatCard icon={Gauge} label="Learning Score" value="87 / 100" hint="High signal" />
-          <StatCard icon={ThumbsUp} label="Worth Watching" value="Yes" hint="Recommended" />
+          <StatCard
+            icon={Clock}
+            label="Time Saved"
+            value={`${Math.round(report.timeSavedSec / 60)} min`}
+            hint={`of ${Math.round(report.durationSec / 60)} min video`}
+          />
+          <StatCard
+            icon={BookOpen}
+            label="Learning Score"
+            value={`${report.overallScore.toFixed(1)} / 5`}
+            hint={renderBooks(report.overallScore)}
+          />
+          <StatCard
+            icon={ThumbsUp}
+            label="Worth Watching"
+            value={report.worthWatching}
+            hint={
+              report.worthWatching === "Yes"
+                ? "Recommended"
+                : report.worthWatching === "Skim"
+                  ? "Watch selectively"
+                  : "Skip it"
+            }
+          />
         </div>
+
+        {/* Learning Score detail */}
+        <SectionTitle icon={BookOpen}>Learning Score</SectionTitle>
+        <Card>
+          <div className="grid gap-6 p-6 md:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Overall Learning Score
+              </p>
+              <div className="mt-2 text-4xl font-semibold tracking-tight">
+                {report.overallScore.toFixed(1)}{" "}
+                <span className="text-lg text-muted-foreground">/ 5</span>
+              </div>
+              <div className="mt-2 text-2xl leading-none">
+                {renderBooks(report.overallScore)}
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                {report.scoreExplanation}
+              </p>
+            </div>
+            <ul className="space-y-3">
+              {report.scoreBreakdown.map((b) => (
+                <li key={b.label} className="flex items-center gap-3">
+                  <span className="w-40 shrink-0 text-sm text-muted-foreground">
+                    {b.label}
+                  </span>
+                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/60">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full bg-primary/80"
+                      style={{ width: `${(b.score / 5) * 100}%` }}
+                    />
+                  </div>
+                  <span className="w-10 text-right text-sm tabular-nums text-foreground">
+                    {b.score.toFixed(1)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Card>
 
         {/* Key Insights */}
         <SectionTitle icon={Sparkles}>Key Insights</SectionTitle>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {[0, 1, 2, 3].map((i) => (
+          {report.keyInsights.map((insight, i) => (
             <Card key={i}>
-              <div className="space-y-3 p-5">
-                <Skeleton className="h-4 w-24 bg-secondary/50" />
-                <Skeleton className="h-4 w-full bg-secondary/50" />
-                <Skeleton className="h-4 w-10/12 bg-secondary/50" />
+              <div className="space-y-2 p-5">
+                <p className="text-xs font-medium uppercase tracking-wider text-primary">
+                  {insight.title}
+                </p>
+                <p className="text-sm leading-relaxed text-foreground/90">
+                  {insight.body}
+                </p>
               </div>
             </Card>
           ))}
@@ -231,42 +326,114 @@ function Report({ url }: { url?: string }) {
         {/* Learning Timeline */}
         <SectionTitle icon={ListTree}>Learning Timeline</SectionTitle>
         <Card>
-          <ol className="divide-y divide-border/60">
-            {["Introduction", "Core Concept", "Practical Example", "Advanced Tips", "Conclusion"].map(
-              (t, i) => (
-                <li key={t} className="flex items-center gap-4 p-5">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-secondary/60 text-xs text-primary">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{t}</p>
-                    <Skeleton className="mt-2 h-3 w-8/12 bg-secondary/50" />
-                  </div>
-                  <span className="text-xs text-muted-foreground">0{i}:{i * 3 + 12}</span>
+          <ol ref={timelineRef} className="divide-y divide-border/60">
+            {report.chapters.map((c, i) => {
+              const isActive = activeChapter === c.id;
+              return (
+                <li key={c.id} data-chapter={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleChapterClick(c.id, c.start)}
+                    className={cn(
+                      "group flex w-full items-center gap-4 p-5 text-left transition-colors",
+                      isActive
+                        ? "bg-primary/10"
+                        : "hover:bg-secondary/40",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs transition-colors",
+                        isActive
+                          ? "border-primary/60 bg-primary/20 text-primary"
+                          : "border-border/70 bg-secondary/60 text-primary group-hover:border-primary/40",
+                      )}
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">
+                        {String(i + 1).padStart(2, "0")} · {c.title}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {c.summary}
+                      </p>
+                    </div>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {formatTimestamp(c.start)}
+                    </span>
+                  </button>
                 </li>
-              ),
-            )}
+              );
+            })}
           </ol>
         </Card>
 
         {/* Skip Map */}
         <SectionTitle icon={MapIcon}>Skip Map</SectionTitle>
         <Card>
-          <div className="p-6">
-            <div className="relative h-3 w-full overflow-hidden rounded-full bg-secondary/60">
-              <div className="absolute inset-y-0 left-[8%] w-[14%] rounded-full bg-destructive/70" />
-              <div className="absolute inset-y-0 left-[34%] w-[22%] rounded-full bg-primary/70" />
-              <div className="absolute inset-y-0 left-[62%] w-[10%] rounded-full bg-destructive/70" />
-              <div className="absolute inset-y-0 left-[76%] w-[18%] rounded-full bg-primary/70" />
+          <div className="space-y-6 p-6">
+            <div className="relative flex h-3 w-full overflow-hidden rounded-full bg-secondary/60">
+              {report.skipMap.map((s) => {
+                const width = ((s.end - s.start) / report.durationSec) * 100;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleSegmentClick(s.id, s.start)}
+                    aria-label={`${s.label} ${formatTimestamp(s.start)} to ${formatTimestamp(s.end)}`}
+                    className={cn(
+                      "h-full transition-opacity hover:opacity-100",
+                      activeSegment && activeSegment !== s.id
+                        ? "opacity-60"
+                        : "opacity-100",
+                      segmentBgClass(s.kind),
+                    )}
+                    style={{ width: `${width}%` }}
+                  />
+                );
+              })}
             </div>
-            <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-primary" /> Watch
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-destructive" /> Skip
-              </span>
-            </div>
+
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {report.skipMap.map((s) => {
+                const isActive = activeSegment === s.id;
+                return (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleSegmentClick(s.id, s.start)}
+                      className={cn(
+                        "flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors",
+                        isActive
+                          ? "border-primary/60 bg-primary/10"
+                          : "border-border/60 bg-secondary/30 hover:bg-secondary/50",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
+                          segmentDotClass(s.kind),
+                        )}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">
+                            {segmentEmoji(s.kind)} {s.label}
+                          </p>
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {formatTimestamp(s.start)} – {formatTimestamp(s.end)}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {s.reason}
+                        </p>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </Card>
 
@@ -287,6 +454,27 @@ function Report({ url }: { url?: string }) {
       </div>
     </section>
   );
+}
+
+function renderBooks(score: number): string {
+  const full = Math.round(score);
+  return "📚".repeat(full) + "☆".repeat(Math.max(0, 5 - full));
+}
+
+function segmentBgClass(kind: SkipSegmentKind): string {
+  if (kind === "watch") return "bg-emerald-500/80";
+  if (kind === "optional") return "bg-amber-400/80";
+  return "bg-red-500/80";
+}
+function segmentDotClass(kind: SkipSegmentKind): string {
+  if (kind === "watch") return "bg-emerald-500";
+  if (kind === "optional") return "bg-amber-400";
+  return "bg-red-500";
+}
+function segmentEmoji(kind: SkipSegmentKind): string {
+  if (kind === "watch") return "🟢";
+  if (kind === "optional") return "🟡";
+  return "🔴";
 }
 
 function Card({ children }: { children: React.ReactNode }) {
