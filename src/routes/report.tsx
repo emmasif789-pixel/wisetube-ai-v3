@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   BookOpen,
@@ -19,7 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTimestamp, getYouTubeVideoId } from "@/lib/youtube";
-import { buildReport, type LearningReport, type SkipSegmentKind } from "@/lib/report-data";
+import { type LearningReport, type SkipSegmentKind } from "@/lib/report-data";
+import { analyzeVideo } from "@/lib/analyze.functions";
 import {
   YouTubePlayer,
   type YouTubePlayerHandle,
@@ -43,42 +47,68 @@ const LOADING_MESSAGES = [
 function ReportPage() {
   const { url } = Route.useSearch();
   const videoId = useMemo(() => (url ? getYouTubeVideoId(url) : null), [url]);
-  const report = useMemo(
-    () => (url && videoId ? buildReport(url, videoId) : null),
-    [url, videoId],
-  );
+  const analyze = useServerFn(analyzeVideo);
+  const query = useQuery<LearningReport, Error>({
+    queryKey: ["report", url],
+    queryFn: () => analyze({ data: { url: url! } }),
+    enabled: Boolean(url && videoId),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState(6);
   const [msgIndex, setMsgIndex] = useState(0);
+  const loading = query.isLoading || query.isFetching;
+  const ready = query.isSuccess && !!query.data;
 
   useEffect(() => {
-    const total = 2600;
+    if (!loading) {
+      setProgress(100);
+      return;
+    }
     const start = Date.now();
     const tick = setInterval(() => {
-      const pct = Math.min(98, ((Date.now() - start) / total) * 100);
-      setProgress(pct);
-    }, 80);
+      // Ease toward 95% over ~20s; jumps to 100% when data arrives.
+      const t = (Date.now() - start) / 20000;
+      setProgress(Math.min(95, 6 + (1 - Math.exp(-t * 2)) * 90));
+    }, 120);
     const msg = setInterval(
       () => setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length),
-      750,
+      1200,
     );
-    const done = setTimeout(() => {
-      setProgress(100);
-      setReady(true);
-    }, total);
     return () => {
       clearInterval(tick);
       clearInterval(msg);
-      clearTimeout(done);
     };
-  }, []);
+  }, [loading]);
+
+  useEffect(() => {
+    if (query.isError && query.error) {
+      toast.error(query.error.message || "Something went wrong analyzing this video.");
+    }
+  }, [query.isError, query.error]);
+
+  const errorMessage = !url
+    ? "No video URL provided."
+    : !videoId
+      ? "That doesn't look like a valid YouTube URL."
+      : query.error?.message ?? null;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Navbar />
       <AnimatePresence mode="wait">
-        {!ready || !report ? (
+        {query.isError || (!url || !videoId) ? (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ErrorScreen message={errorMessage ?? "Something went wrong."} />
+          </motion.div>
+        ) : !ready || !query.data ? (
           <motion.div
             key="loading"
             initial={{ opacity: 0 }}
@@ -95,12 +125,37 @@ function ReportPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <Report report={report} />
+            <Report report={query.data} />
           </motion.div>
         )}
       </AnimatePresence>
       <Footer />
     </main>
+  );
+}
+
+function ErrorScreen({ message }: { message: string }) {
+  return (
+    <section className="relative pt-40 pb-24 sm:pt-48">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{ background: "var(--gradient-hero)" }}
+        aria-hidden
+      />
+      <div className="mx-auto max-w-xl px-6 text-center">
+        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+          We couldn't analyze this video
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground sm:text-base">{message}</p>
+        <div className="mt-6">
+          <Button asChild size="lg" className="h-11 rounded-xl px-5">
+            <a href="/">
+              <ArrowLeft className="mr-1 h-4 w-4" /> Try another video
+            </a>
+          </Button>
+        </div>
+      </div>
+    </section>
   );
 }
 
