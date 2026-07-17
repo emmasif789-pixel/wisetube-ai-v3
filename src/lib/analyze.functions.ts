@@ -111,8 +111,13 @@ async function generateReport(args: {
   transcript: string;
   durationSec: number;
 }): Promise<LearningReport> {
+  void 0;
   const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("AI is not configured. Please contact support.");
+  if (!apiKey) {
+    throw new Error(
+      "AI key missing. Please add your LOVABLE_API_KEY to enable analysis.",
+    );
+  }
 
   const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. Be honest — if the video is thin or filler-heavy, say so. All timestamps are in SECONDS and MUST be between 0 and ${args.durationSec}. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
 {
