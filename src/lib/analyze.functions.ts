@@ -167,7 +167,7 @@ Return the JSON report now.`;
   if (!content) throw new Error("AI returned an empty response.");
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(extractJson(content));
   } catch {
     throw new Error("AI returned malformed output.");
   }
