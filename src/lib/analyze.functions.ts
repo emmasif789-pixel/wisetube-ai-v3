@@ -18,6 +18,18 @@ function extractVideoId(url: string): string | null {
   }
 }
 
+function extractJson(raw: string): string {
+  let s = raw.trim();
+  s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+  const first = s.search(/[{[]/);
+  if (first === -1) throw new Error("no json");
+  const openCh = s[first];
+  const closeCh = openCh === "{" ? "}" : "]";
+  const last = s.lastIndexOf(closeCh);
+  if (last <= first) throw new Error("no json");
+  return s.slice(first, last + 1);
+}
+
 interface TranscriptSegment {
   start: number;
   dur: number;
