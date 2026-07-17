@@ -18,6 +18,18 @@ function extractVideoId(url: string): string | null {
   }
 }
 
+function extractJson(raw: string): string {
+  let s = raw.trim();
+  s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+  const first = s.search(/[{[]/);
+  if (first === -1) throw new Error("no json");
+  const openCh = s[first];
+  const closeCh = openCh === "{" ? "}" : "]";
+  const last = s.lastIndexOf(closeCh);
+  if (last <= first) throw new Error("no json");
+  return s.slice(first, last + 1);
+}
+
 interface TranscriptSegment {
   start: number;
   dur: number;
@@ -111,8 +123,13 @@ async function generateReport(args: {
   transcript: string;
   durationSec: number;
 }): Promise<LearningReport> {
+  void 0;
   const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("AI is not configured. Please contact support.");
+  if (!apiKey) {
+    throw new Error(
+      "AI key missing. Please add your LOVABLE_API_KEY to enable analysis.",
+    );
+  }
 
   const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. Be honest — if the video is thin or filler-heavy, say so. All timestamps are in SECONDS and MUST be between 0 and ${args.durationSec}. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
 {
@@ -167,7 +184,7 @@ Return the JSON report now.`;
   if (!content) throw new Error("AI returned an empty response.");
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(extractJson(content));
   } catch {
     throw new Error("AI returned malformed output.");
   }
