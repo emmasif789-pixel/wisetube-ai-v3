@@ -68,16 +68,17 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.05 }}
-          className="text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+          className="text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.03em] sm:text-6xl md:text-7xl lg:text-[5.25rem]"
         >
-          Know if a YouTube video is{" "}
+          Watch Less.
+          <br />
+          Learn More.{" "}
           <span
-            className="bg-clip-text text-transparent"
-            style={{ backgroundImage: "var(--gradient-text)" }}
+            className="italic font-serif font-normal bg-clip-text text-transparent"
+            style={{ backgroundImage: "var(--gradient-text)", fontFamily: "'Instrument Serif', 'Cormorant Garamond', ui-serif, Georgia, serif" }}
           >
-            worth your time
-          </span>{" "}
-          before you press play.
+            Instantly.
+          </span>
         </motion.h1>
 
         <motion.p
@@ -114,7 +115,8 @@ export function Hero() {
               type="submit"
               size="lg"
               disabled={loading}
-              className="group/btn h-11 rounded-xl px-5 font-medium"
+              className="group/btn h-11 rounded-xl px-6 font-medium transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
+              style={{ boxShadow: "var(--shadow-glow)" }}
             >
               {loading ? (
                 <>
