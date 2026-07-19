@@ -115,7 +115,8 @@ export function Hero() {
               type="submit"
               size="lg"
               disabled={loading}
-              className="group/btn h-11 rounded-xl px-5 font-medium"
+              className="group/btn h-11 rounded-xl px-6 font-medium transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
+              style={{ boxShadow: "var(--shadow-glow)" }}
             >
               {loading ? (
                 <>
