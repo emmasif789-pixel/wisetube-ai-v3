@@ -89,7 +89,7 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         style={{
           background:
-            "radial-gradient(400px circle at 50% 0%, oklch(0.86 0.14 90 / 0.12), transparent 60%)",
+            "radial-gradient(400px circle at 50% 0%, oklch(0.66 0.22 275 / 0.16), transparent 60%)",
         }}
         aria-hidden
       />
