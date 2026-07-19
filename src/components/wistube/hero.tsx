@@ -68,11 +68,21 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.05 }}
-          className="text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.03em] sm:text-6xl md:text-7xl lg:text-[5.25rem]"
+          className="text-balance text-5xl font-semibold leading-[1.02] tracking-[-0.035em] sm:text-6xl md:text-7xl lg:text-[5.25rem]"
         >
-          Watch Less.
+          <span
+            className="bg-clip-text text-transparent"
+            style={{ backgroundImage: "var(--gradient-text)" }}
+          >
+            Watch Less.
+          </span>
           <br />
-          Learn More.{" "}
+          <span
+            className="bg-clip-text text-transparent"
+            style={{ backgroundImage: "var(--gradient-text)" }}
+          >
+            Learn More.
+          </span>{" "}
           <span
             className="italic font-serif font-normal bg-clip-text text-transparent"
             style={{ backgroundImage: "var(--gradient-text)", fontFamily: "'Instrument Serif', 'Cormorant Garamond', ui-serif, Georgia, serif" }}
@@ -85,10 +95,9 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.15 }}
-          className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg"
+          className="mx-auto mt-7 max-w-xl text-pretty text-base leading-relaxed tracking-[-0.005em] text-muted-foreground sm:text-lg"
         >
-          Paste any YouTube link and receive an AI-powered Learning Report that
-          helps you decide whether the video deserves your time.
+          Turn any YouTube video into clear, actionable knowledge in seconds.
         </motion.p>
 
         <motion.form
@@ -96,15 +105,23 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.25 }}
           onSubmit={handleSubmit}
-          className="mx-auto mt-10 max-w-2xl"
+          className="mx-auto mt-12 max-w-2xl"
         >
-          <div className="group flex flex-col gap-2 rounded-2xl border border-border/70 bg-card/70 p-2 shadow-[var(--shadow-card)] backdrop-blur-xl transition-colors focus-within:border-primary/60 sm:flex-row sm:items-center sm:gap-1 sm:pr-2">
-            <div className="flex flex-1 items-center gap-3 px-3 py-2">
-              <Youtube className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <div
+            className="group relative flex flex-col gap-2 rounded-2xl border border-white/[0.09] bg-card/60 p-2 backdrop-blur-xl transition-all duration-300 hover:border-white/[0.14] focus-within:border-primary/50 sm:flex-row sm:items-center sm:gap-1 sm:pr-2"
+            style={{ boxShadow: "var(--shadow-input)" }}
+          >
+            {/* Top hairline highlight */}
+            <div
+              className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-70"
+              aria-hidden
+            />
+            <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
+              <Youtube className="h-5 w-5 shrink-0 text-muted-foreground transition-colors duration-200 group-focus-within:text-primary" />
               <input
                 type="url"
                 placeholder="Paste a YouTube video link…"
-                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none sm:text-base"
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none sm:text-base"
                 aria-label="YouTube video URL"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -132,7 +149,7 @@ export function Hero() {
               )}
             </Button>
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-4 text-xs text-muted-foreground/80">
             Free to try · No account required
           </p>
         </motion.form>
