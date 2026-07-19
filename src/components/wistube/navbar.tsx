@@ -31,7 +31,11 @@ export function Navbar() {
             </a>
           ))}
         </div>
-        <Button size="sm" className="rounded-lg font-medium">
+        <Button
+          size="sm"
+          className="rounded-lg font-medium transition-all duration-200 hover:brightness-110 active:scale-[0.98]"
+          style={{ boxShadow: "var(--shadow-glow)" }}
+        >
           Get Started
         </Button>
       </nav>
