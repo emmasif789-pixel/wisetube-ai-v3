@@ -42,6 +42,7 @@ async function fetchTranscript(videoId: string): Promise<TranscriptSegment[]> {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9",
+      "Cookie": "CONSENT=YES+1",
     },
   });
   if (!res.ok) throw new Error("Could not load this video. Please try another URL.");
@@ -67,7 +68,11 @@ async function fetchTranscript(videoId: string): Promise<TranscriptSegment[]> {
     tracks[0];
   if (!track?.baseUrl) throw new Error("Transcript unavailable for this video.");
   const url = track.baseUrl.replace(/\\u0026/g, "&") + "&fmt=json3";
-  const tRes = await fetch(url);
+  const tRes = await fetch(url, {
+    headers: {
+      "Cookie": "CONSENT=YES+1",
+    },
+  });
   if (!tRes.ok) throw new Error("Transcript unavailable for this video.");
   const tJson = (await tRes.json()) as {
     events?: Array<{ tStartMs?: number; dDurationMs?: number; segs?: Array<{ utf8?: string }> }>;
@@ -124,10 +129,10 @@ async function generateReport(args: {
   durationSec: number;
 }): Promise<LearningReport> {
   void 0;
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "AI key missing. Please add your LOVABLE_API_KEY to enable analysis.",
+      "AI key missing. Please add your GROQ_API_KEY to enable analysis.",
     );
   }
 
@@ -155,27 +160,37 @@ ${args.transcript.slice(0, 45000)}
 
 Return the JSON report now.`;
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": apiKey,
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-5.5",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
+  const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+  let res: Response | null = null;
+  let lastStatus = 0;
 
-  if (res.status === 429) throw new Error("AI is busy right now. Please try again in a moment.");
-  if (res.status === 402) throw new Error("AI credits exhausted. Please add credits in your workspace.");
+  for (const model of models) {
+    res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    lastStatus = res.status;
+    if (res.ok) break;
+    // On rate-limit/quota errors, try the next (smaller/cheaper) model.
+    if (res.status !== 429 && res.status !== 503) break;
+  }
+
+  if (!res) throw new Error("AI analysis failed. Please try again.");
   if (!res.ok) {
+    if (lastStatus === 429) throw new Error("AI is busy right now. Please try again in a moment.");
     const body = await res.text().catch(() => "");
-    throw new Error(`AI analysis failed (${res.status}). ${body.slice(0, 200)}`);
+    throw new Error(`AI analysis failed (${lastStatus}). ${body.slice(0, 200)}`);
   }
   const json = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
