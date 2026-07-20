@@ -36,20 +36,10 @@ export function Hero() {
       id="home"
       className="relative overflow-hidden pt-40 pb-24 sm:pt-48 sm:pb-32"
     >
-      {/* Ambient gradient background */}
+      {/* Subtle hero wash (aurora sits behind everything globally) */}
       <div
         className="pointer-events-none absolute inset-0 -z-10"
         style={{ background: "var(--gradient-hero)" }}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-          maskImage: "radial-gradient(ellipse 60% 60% at 50% 30%, black, transparent 80%)",
-        }}
         aria-hidden
       />
 
@@ -58,9 +48,12 @@ export function Hero() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur"
+          className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/60 px-3.5 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md shadow-[0_1px_0_0_var(--color-foreground)/5_inset]"
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_theme(colors.primary)]" />
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inset-0 animate-ping rounded-full bg-primary opacity-60" />
+            <span className="relative h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_10px_var(--color-primary)]" />
+          </span>
           Your AI learning companion for YouTube
         </motion.div>
 
