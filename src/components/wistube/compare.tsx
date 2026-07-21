@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Loader2, Trophy, Youtube } from "lucide-react";
+import { ArrowRight, ExternalLink, Loader2, Trophy, Youtube } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { analyzeVideo } from "@/lib/analyze.functions";
@@ -156,6 +156,14 @@ function CompareCard({
       <p className="mt-4 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
         {report.executiveSummary}
       </p>
+      <a
+        href={`/report?url=${encodeURIComponent(report.url)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+      >
+        View full report <ExternalLink className="h-3 w-3" />
+      </a>
     </motion.div>
   );
 }
