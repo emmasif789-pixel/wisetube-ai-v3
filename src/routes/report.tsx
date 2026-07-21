@@ -8,6 +8,8 @@ import {
   ArrowLeft,
   BookOpen,
   Clock,
+  GitCompare,
+  HelpCircle,
   ListTree,
   Map as MapIcon,
   MessagesSquare,
@@ -28,6 +30,9 @@ import {
   YouTubePlayer,
   type YouTubePlayerHandle,
 } from "@/components/wistube/youtube-player";
+import { AskAi } from "@/components/wistube/ask-ai";
+import { Quiz } from "@/components/wistube/quiz";
+import { Compare } from "@/components/wistube/compare";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ url: z.string().optional() });
@@ -495,16 +500,19 @@ function Report({ report }: { report: LearningReport }) {
         {/* Ask AI */}
         <SectionTitle icon={MessagesSquare}>Ask AI</SectionTitle>
         <Card>
-          <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
-            <input
-              disabled
-              placeholder="Ask any question about this video…"
-              className="w-full flex-1 rounded-xl border border-border/70 bg-background/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            />
-            <Button disabled className="h-11 rounded-xl px-5">
-              Coming soon
-            </Button>
-          </div>
+          <AskAi report={report} />
+        </Card>
+
+        {/* Quiz */}
+        <SectionTitle icon={HelpCircle}>Test Your Knowledge</SectionTitle>
+        <Card>
+          <Quiz report={report} />
+        </Card>
+
+        {/* Compare */}
+        <SectionTitle icon={GitCompare}>Compare Videos</SectionTitle>
+        <Card>
+          <Compare report={report} />
         </Card>
       </div>
     </section>
