@@ -37,58 +37,52 @@ interface TranscriptSegment {
 }
 
 async function fetchTranscript(videoId: string): Promise<TranscriptSegment[]> {
-  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
+  const apiKey = process.env.TRANSCRIPT_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "Transcript service key missing. Please add TRANSCRIPT_API_KEY to enable analysis.",
+    );
+  }
+
+  const res = await fetch("https://www.youtube-transcript.io/api/transcripts", {
+    method: "POST",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Cookie": "CONSENT=YES+1",
+      "Content-Type": "application/json",
+      "Authorization": `Basic ${apiKey}`,
     },
+    body: JSON.stringify({ ids: [videoId] }),
   });
-  if (!res.ok) throw new Error("Could not load this video. Please try another URL.");
-  const html = await res.text();
-  if (
-    html.includes('"status":"LOGIN_REQUIRED"') ||
-    html.includes('"isPrivate":true') ||
-    html.includes('"status":"ERROR"')
-  ) {
-    throw new Error("This video is private or unavailable.");
+
+  if (!res.ok) {
+    if (res.status === 429) throw new Error("Transcript service is busy right now. Please try again in a moment.");
+    throw new Error("Could not load this video. Please try another URL.");
   }
-  const match = html.match(/"captionTracks":(\[.*?\])/);
-  if (!match) throw new Error("Transcript unavailable for this video.");
-  let tracks: Array<{ baseUrl?: string; languageCode?: string; kind?: string }>;
-  try {
-    tracks = JSON.parse(match[1].replace(/\\u0026/g, "&").replace(/\\"/g, '"'));
-  } catch {
-    throw new Error("Transcript unavailable for this video.");
-  }
+
+  const json = (await res.json()) as Array<{
+    id?: string;
+    tracks?: Array<{
+      language?: string;
+      transcript?: Array<{ text?: string; start?: string | number; dur?: string | number }>;
+    }>;
+  }>;
+
+  const entry = json.find((e) => e.id === videoId) ?? json[0];
   const track =
-    tracks.find((t) => t.languageCode === "en" && !t.kind) ??
-    tracks.find((t) => t.languageCode === "en") ??
-    tracks[0];
-  if (!track?.baseUrl) throw new Error("Transcript unavailable for this video.");
-  const url = track.baseUrl.replace(/\\u0026/g, "&") + "&fmt=json3";
-  const tRes = await fetch(url, {
-    headers: {
-      "Cookie": "CONSENT=YES+1",
-    },
-  });
-  if (!tRes.ok) throw new Error("Transcript unavailable for this video.");
-  const tJson = (await tRes.json()) as {
-    events?: Array<{ tStartMs?: number; dDurationMs?: number; segs?: Array<{ utf8?: string }> }>;
-  };
-  const segs = (tJson.events ?? [])
-    .filter((e) => Array.isArray(e.segs))
-    .map((e) => ({
-      start: (e.tStartMs ?? 0) / 1000,
-      dur: (e.dDurationMs ?? 0) / 1000,
-      text: (e.segs ?? [])
-        .map((s) => s.utf8 ?? "")
-        .join("")
-        .replace(/\s+/g, " ")
-        .trim(),
+    entry?.tracks?.find((t) => t.language?.toLowerCase().startsWith("en")) ??
+    entry?.tracks?.[0];
+
+  if (!track?.transcript?.length) {
+    throw new Error("This video is private, unavailable, or has no transcript.");
+  }
+
+  const segs = track.transcript
+    .map((t) => ({
+      start: Number(t.start ?? 0),
+      dur: Number(t.dur ?? 0),
+      text: (t.text ?? "").replace(/\s+/g, " ").trim(),
     }))
     .filter((s) => s.text);
+
   if (!segs.length) throw new Error("Transcript unavailable for this video.");
   return segs;
 }
