@@ -64,9 +64,13 @@ export function AskAi({ report }: { report: LearningReport }) {
         className="max-h-[420px] min-h-[200px] space-y-3 overflow-y-auto px-5 py-4"
       >
         {messages.length === 0 && !loading && (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            <Sparkles className="mx-auto mb-2 h-5 w-5 text-primary" />
-            Ask any question about this video — timelines, takeaways, or examples.
+          <div className="py-8 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <p className="mx-auto mt-4 max-w-xs text-sm text-muted-foreground">
+              Ask any question about this video — timelines, takeaways, or examples.
+            </p>
           </div>
         )}
         <AnimatePresence initial={false}>

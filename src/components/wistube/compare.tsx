@@ -78,18 +78,28 @@ export function Compare({ report }: { report: LearningReport }) {
     );
   }
 
-  const leftBetter = report.overallScore >= other.overallScore;
+  const scoreDiff = Math.abs(report.overallScore - other.overallScore);
+  const isTie = scoreDiff <= 0.1;
+  const leftWins = !isTie && report.overallScore > other.overallScore;
+  const rightWins = !isTie && other.overallScore > report.overallScore;
 
   return (
     <div className="p-5">
-      <div className="relative grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <CompareCard report={report} winner={leftBetter} />
-        <CompareCard report={other} winner={!leftBetter} />
+      <div className="relative grid items-stretch gap-4 sm:grid-cols-2 sm:gap-6">
+        <CompareCard report={report} winner={leftWins} />
+        <CompareCard report={other} winner={rightWins} />
         <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center sm:flex">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-card/80 text-[11px] font-semibold tracking-wider text-primary backdrop-blur-xl">
-            <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
-            <span className="relative">VS</span>
-          </div>
+          {isTie ? (
+            <div className="relative flex items-center justify-center rounded-full border border-primary/40 bg-card/80 px-3 py-1 text-[10px] font-semibold tracking-wider text-primary backdrop-blur-xl">
+              <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+              <span className="relative">Too close to call</span>
+            </div>
+          ) : (
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-primary/40 bg-card/80 text-[11px] font-semibold tracking-wider text-primary backdrop-blur-xl">
+              <span className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+              <span className="relative">VS</span>
+            </div>
+          )}
         </div>
       </div>
       <div className="mt-6 flex justify-center">
@@ -121,7 +131,7 @@ function CompareCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
       className={cn(
-        "relative rounded-2xl border p-5 transition-all",
+        "relative flex h-full flex-col rounded-2xl border p-5 transition-all",
         winner
           ? "border-primary/50 bg-primary/5"
           : "border-border/60 bg-secondary/20",
@@ -133,37 +143,39 @@ function CompareCard({
           <Trophy className="h-3 w-3" /> Better pick
         </span>
       )}
-      <p className="truncate text-xs uppercase tracking-wider text-muted-foreground">
-        {report.channel}
-      </p>
-      <h3 className="mt-1 line-clamp-2 text-base font-semibold tracking-tight text-foreground">
-        {report.title}
-      </h3>
-      <div className="mt-4 flex items-end gap-2">
-        <div className="text-3xl font-semibold tracking-tight">
-          {report.overallScore.toFixed(1)}
+      <div className="flex-1">
+        <p className="truncate text-xs uppercase tracking-wider text-muted-foreground">
+          {report.channel}
+        </p>
+        <h3 className="mt-1 line-clamp-2 text-base font-semibold tracking-tight text-foreground">
+          {report.title}
+        </h3>
+        <div className="mt-4 flex items-end gap-2">
+          <div className="text-3xl font-semibold tracking-tight">
+            {report.overallScore.toFixed(1)}
+          </div>
+          <div className="pb-1 text-xs text-muted-foreground">/ 5</div>
         </div>
-        <div className="pb-1 text-xs text-muted-foreground">/ 5</div>
-      </div>
-      <div className="mt-1 text-lg leading-none">
-        {renderBooks(report.overallScore)}
+        <div className="mt-1 text-lg leading-none">
+          {renderBooks(report.overallScore)}
+        </div>
+        <p className="mt-4 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
+          {report.executiveSummary}
+        </p>
+        <a
+          href={`/report?url=${encodeURIComponent(report.url)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
+          View full report <ExternalLink className="h-3 w-3" />
+        </a>
       </div>
       <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
         <Stat label="Worth" value={report.worthWatching} />
         <Stat label="Length" value={`${Math.round(report.durationSec / 60)}m`} />
         <Stat label="Saved" value={`${Math.round(report.timeSavedSec / 60)}m`} />
       </dl>
-      <p className="mt-4 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
-        {report.executiveSummary}
-      </p>
-      <a
-        href={`/report?url=${encodeURIComponent(report.url)}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-      >
-        View full report <ExternalLink className="h-3 w-3" />
-      </a>
     </motion.div>
   );
 }
