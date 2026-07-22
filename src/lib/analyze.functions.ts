@@ -99,9 +99,9 @@ const reportSchema = z.object({
     .array(z.object({ label: z.string(), score: z.number().min(0).max(5) }))
     .min(3),
   executiveSummary: z.string(),
-  keyInsights: z.array(z.object({ title: z.string(), body: z.string() })).min(1),
+  keyInsights: z.array(z.object({ title: z.string(), body: z.string().default("") })).min(1),
   chapters: z
-    .array(z.object({ title: z.string(), start: z.number().min(0), summary: z.string() }))
+    .array(z.object({ title: z.string(), start: z.number().min(0), summary: z.string().default("") }))
     .min(1),
   skipMap: z
     .array(
@@ -110,11 +110,24 @@ const reportSchema = z.object({
         label: z.string(),
         start: z.number().min(0),
         end: z.number().min(0),
-        reason: z.string(),
+        reason: z.string().default(""),
       }),
     )
     .min(1),
 });
+
+function fixOutOfRangeTimestamps(text: string, durationSec: number): string {
+  const maxM = Math.floor(durationSec / 60);
+  const maxS = durationSec % 60;
+  return text.replace(/\b(\d{1,3}):([0-5]\d)\b/g, (match, mStr, sStr) => {
+    const m = parseInt(mStr, 10);
+    const s = parseInt(sStr, 10);
+    const totalSec = m * 60 + s;
+    if (totalSec <= durationSec) return match;
+    // Out of range — clamp to the video's actual end time instead of leaving a false claim.
+    return `${maxM}:${String(maxS).padStart(2, "0")}`;
+  });
+}
 
 async function generateReport(args: {
   url: string;
@@ -130,7 +143,7 @@ async function generateReport(args: {
     );
   }
 
-  const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. Be honest — if the video is thin or filler-heavy, say so. All numeric "start"/"end" fields (in chapters and skipMap) are in SECONDS and MUST be between 0 and ${args.durationSec}. However, whenever you refer to a time in PROSE TEXT (executiveSummary, scoreExplanation, keyInsights, reason fields), always write it as mm:ss (e.g. "5:37"), never as raw seconds (never write "337 seconds"). Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
+  const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. Be honest — if the video is thin or filler-heavy, say so. This video is exactly ${args.durationSec} seconds long (${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")}). All numeric "start"/"end" fields (in chapters and skipMap) are in SECONDS and MUST be between 0 and ${args.durationSec} — never exceed this. CRITICAL: whenever you refer to a time in PROSE TEXT (executiveSummary, scoreExplanation, keyInsights, reason fields), you MUST write it as mm:ss (e.g. "5:37"), and that time MUST be less than or equal to ${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")} (the video's actual length). NEVER invent or estimate a timestamp — only reference times that correspond to an actual moment in the transcript provided below. Do not write a prose timestamp higher than the video's total duration under any circumstance. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
 {
   "title": string,               // best guess of the video's title/topic
   "channel": string,             // best guess of channel/creator, or "Unknown"
@@ -212,7 +225,7 @@ Return the JSON report now.`;
       id: `c${i}`,
       title: c.title,
       start: Math.min(Math.max(0, Math.floor(c.start)), args.durationSec),
-      summary: c.summary,
+      summary: fixOutOfRangeTimestamps(c.summary, args.durationSec),
     }))
     .sort((a, b) => a.start - b.start);
 
@@ -222,7 +235,7 @@ Return the JSON report now.`;
     label: s.label,
     start: Math.min(Math.max(0, Math.floor(s.start)), args.durationSec),
     end: Math.min(Math.max(0, Math.floor(s.end)), args.durationSec),
-    reason: s.reason,
+    reason: fixOutOfRangeTimestamps(s.reason, args.durationSec),
   }));
 
   return {
@@ -236,13 +249,16 @@ Return the JSON report now.`;
     timeSavedSec: Math.floor(timeSavedSec),
     worthWatching: r.worthWatching,
     overallScore: Math.round(r.overallScore * 10) / 10,
-    scoreExplanation: r.scoreExplanation,
+    scoreExplanation: fixOutOfRangeTimestamps(r.scoreExplanation, args.durationSec),
     scoreBreakdown: r.scoreBreakdown.map((b) => ({
       label: b.label,
       score: Math.round(b.score * 10) / 10,
     })),
-    executiveSummary: r.executiveSummary,
-    keyInsights: r.keyInsights,
+    executiveSummary: fixOutOfRangeTimestamps(r.executiveSummary, args.durationSec),
+    keyInsights: r.keyInsights.map((k) => ({
+      title: k.title,
+      body: fixOutOfRangeTimestamps(k.body, args.durationSec),
+    })),
     chapters: clampedChapters,
     skipMap: clampedSkip,
   };
