@@ -159,15 +159,24 @@ async function generateReport(args: {
   "skipMap": [ {"kind": "watch"|"optional"|"skip", "label": string, "start": number, "end": number, "reason": string} ] // 4-6 items covering the video
 }`;
 
+  // Groq free tier caps llama-3.3-70b-versatile at ~12,000 tokens/minute (~4 chars/token).
+  // Keep total prompt (system + user) comfortably under that, and for large transcripts
+  // start with the smaller/cheaper model which has more headroom.
+  const MAX_TRANSCRIPT_CHARS = 20000;
+  const transcriptForPrompt = args.transcript.slice(0, MAX_TRANSCRIPT_CHARS);
+  const isLarge = args.transcript.length > MAX_TRANSCRIPT_CHARS;
+
   const user = `Video URL: ${args.url}
 Video duration: ${args.durationSec} seconds.
 
-Transcript (each line prefixed with [start_seconds]):
-${args.transcript.slice(0, 45000)}
+Transcript (each line prefixed with [start_seconds]${isLarge ? ", truncated to fit — infer the rest of the video's structure proportionally from what's shown" : ""}):
+${transcriptForPrompt}
 
 Return the JSON report now.`;
 
-  const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+  const models = isLarge
+    ? ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+    : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
   let res: Response | null = null;
   let lastStatus = 0;
 
@@ -189,8 +198,8 @@ Return the JSON report now.`;
     });
     lastStatus = res.status;
     if (res.ok) break;
-    // On rate-limit/quota errors, try the next (smaller/cheaper) model.
-    if (res.status !== 429 && res.status !== 503) break;
+    // On rate-limit/quota/payload-too-large errors, try the next model.
+    if (res.status !== 429 && res.status !== 503 && res.status !== 413) break;
   }
 
   if (!res) throw new Error("AI analysis failed. Please try again.");
