@@ -130,7 +130,7 @@ async function generateReport(args: {
     );
   }
 
-  const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. Be honest — if the video is thin or filler-heavy, say so. All timestamps are in SECONDS and MUST be between 0 and ${args.durationSec}. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
+  const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. Be honest — if the video is thin or filler-heavy, say so. All numeric "start"/"end" fields (in chapters and skipMap) are in SECONDS and MUST be between 0 and ${args.durationSec}. However, whenever you refer to a time in PROSE TEXT (executiveSummary, scoreExplanation, keyInsights, reason fields), always write it as mm:ss (e.g. "5:37"), never as raw seconds (never write "337 seconds"). Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
 {
   "title": string,               // best guess of the video's title/topic
   "channel": string,             // best guess of channel/creator, or "Unknown"
