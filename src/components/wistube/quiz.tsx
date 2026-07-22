@@ -73,8 +73,10 @@ export function Quiz({ report }: { report: LearningReport }) {
   if (!questions) {
     return (
       <div className="p-6 text-center">
-        <Sparkles className="mx-auto h-6 w-6 text-primary" />
-        <p className="mx-auto mt-3 max-w-sm text-sm text-muted-foreground">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
+          <Sparkles className="h-5 w-5 text-primary" />
+        </div>
+        <p className="mx-auto mt-4 max-w-sm text-sm text-muted-foreground">
           Test your understanding with a 5-question quiz generated from this video.
         </p>
         <Button

@@ -292,7 +292,7 @@ function Report({ report }: { report: LearningReport }) {
 
         {/* Executive Summary */}
         <SectionTitle icon={Sparkles}>Executive Summary</SectionTitle>
-        <Card>
+        <Card className="h-auto">
           <p className="p-6 text-sm leading-relaxed text-foreground/90 sm:text-base">
             {report.executiveSummary}
           </p>
@@ -540,10 +540,19 @@ function segmentEmoji(kind: SkipSegmentKind): string {
   return "🔴";
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div
-      className="overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl"
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl",
+        className,
+      )}
       style={{ boxShadow: "var(--shadow-card)" }}
     >
       {children}
