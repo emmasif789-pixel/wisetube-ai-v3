@@ -145,6 +145,9 @@ export function Hero() {
           <p className="mt-4 text-xs text-muted-foreground/80">
             Free to try · No account required
           </p>
+          <p className="mt-1.5 text-xs text-muted-foreground/60">
+            For lengthy videos, we intelligently focus on the richest sections first.
+          </p>
         </motion.form>
       </div>
     </section>
