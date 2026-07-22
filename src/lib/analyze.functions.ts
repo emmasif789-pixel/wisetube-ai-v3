@@ -219,6 +219,10 @@ Return the JSON report now.`;
   } catch {
     throw new Error("AI returned malformed output.");
   }
+  // Some smaller models occasionally wrap the object in an array — unwrap if so.
+  if (Array.isArray(parsed)) {
+    parsed = parsed[0];
+  }
   const r = reportSchema.parse(parsed);
 
   // Compute time saved from skip map (skip = full, optional = half)
