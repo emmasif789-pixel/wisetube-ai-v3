@@ -351,10 +351,11 @@ function Report({ report }: { report: LearningReport }) {
         <SectionTitle icon={Sparkles}>Executive Summary</SectionTitle>
         <ElevatedCard>
           <div className="grid gap-6 p-8 sm:grid-cols-3">
-            <SummaryBlock label="The Idea" text={report.executiveSummary} />
-            <SummaryBlock label="Why It Matters" text={report.scoreExplanation} />
+            <SummaryBlock label="The Idea" text={report.executiveSummary} onJump={jumpTo} />
+            <SummaryBlock label="Why It Matters" text={report.scoreExplanation} onJump={jumpTo} />
             <SummaryBlock
               label="Worth Your Time?"
+              onJump={jumpTo}
               text={
                 report.worthWatching === "Yes"
                   ? "Yes — this one earns its runtime."
@@ -417,7 +418,7 @@ function Report({ report }: { report: LearningReport }) {
                   {insight.title}
                 </p>
                 <p className="text-sm leading-relaxed text-foreground/90">
-                  {insight.body}
+                  <TextWithTimestamps text={insight.body} onJump={jumpTo} />
                 </p>
               </div>
             </ElevatedCard>
@@ -569,13 +570,52 @@ function metricIcon(label: string) {
   return BookOpen;
 }
 
-function SummaryBlock({ label, text }: { label: string; text: string }) {
+function TextWithTimestamps({
+  text,
+  onJump,
+}: {
+  text: string;
+  onJump: (seconds: number) => void;
+}) {
+  const parts = text.split(/(\b\d{1,3}:[0-5]\d\b)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        const match = /^(\d{1,3}):([0-5]\d)$/.exec(part);
+        if (!match) return <span key={i}>{part}</span>;
+        const seconds = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onJump(seconds)}
+            className="font-semibold text-primary underline decoration-primary/40 underline-offset-2 transition-colors hover:decoration-primary"
+          >
+            {part}
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
+function SummaryBlock({
+  label,
+  text,
+  onJump,
+}: {
+  label: string;
+  text: string;
+  onJump: (seconds: number) => void;
+}) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-primary">
         {label}
       </p>
-      <p className="mt-2 text-sm leading-relaxed text-foreground/90">{text}</p>
+      <p className="mt-2 text-sm leading-relaxed text-foreground/90">
+        <TextWithTimestamps text={text} onJump={onJump} />
+      </p>
     </div>
   );
 }
