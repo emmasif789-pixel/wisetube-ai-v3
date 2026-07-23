@@ -7,15 +7,20 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   BookOpen,
+  CheckCircle,
   Clock,
+  Eye,
   GitCompare,
+  GraduationCap,
   HelpCircle,
   ListTree,
   Map as MapIcon,
   MessagesSquare,
   Play,
   Sparkles,
+  Star,
   ThumbsUp,
+  Wrench,
 } from "lucide-react";
 import { z } from "zod";
 import { Navbar } from "@/components/wistube/navbar";
@@ -73,7 +78,6 @@ function ReportPage() {
     }
     const start = Date.now();
     const tick = setInterval(() => {
-      // Ease toward 95% over ~20s; jumps to 100% when data arrives.
       const t = (Date.now() - start) / 20000;
       setProgress(Math.min(95, 6 + (1 - Math.exp(-t * 2)) * 90));
     }, 120);
@@ -151,7 +155,7 @@ function ErrorScreen({ message }: { message: string }) {
         <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
           We couldn't analyze this video
         </h1>
-        <p className="mt-3 text-sm text-muted-foreground sm:text-base">{message}</p>
+        <p className="mt-3 text-sm text-muted-foreground">{message}</p>
         <div className="mt-6">
           <Button asChild size="lg" className="h-11 rounded-xl px-5">
             <a href="/">
@@ -211,10 +215,10 @@ function LoadingScreen({ message, progress }: { message: string; progress: numbe
 function ShimmerCard({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl ${className}`}
+      className={`relative overflow-hidden rounded-[20px] bg-card/60 backdrop-blur-xl ${className}`}
       style={{ boxShadow: "var(--shadow-card)" }}
     >
-      <Skeleton className="absolute inset-0 rounded-2xl bg-secondary/40" />
+      <Skeleton className="absolute inset-0 rounded-[20px] bg-secondary/40" />
       <div
         className="absolute inset-0 -translate-x-full animate-[shimmer_1.8s_infinite]"
         style={{
@@ -251,6 +255,15 @@ function Report({ report }: { report: LearningReport }) {
     jumpTo(start);
   };
 
+  const minutesSaved = Math.max(0, Math.round(report.timeSavedSec / 60));
+  const minutesToMaster = Math.max(
+    1,
+    Math.round((report.durationSec - report.timeSavedSec) / 60),
+  );
+  const savedPct = report.durationSec
+    ? Math.min(100, Math.round((report.timeSavedSec / report.durationSec) * 100))
+    : 0;
+
   return (
     <section className="relative pt-32 pb-24 sm:pt-40">
       <div className="mx-auto max-w-5xl px-6">
@@ -265,71 +278,98 @@ function Report({ report }: { report: LearningReport }) {
           </a>
         </Button>
 
-        {/* Video Header with embedded player */}
-        <Card>
-          <div className="flex flex-col gap-5 p-6 lg:flex-row">
-            <div className="w-full lg:w-2/3">
-              <YouTubePlayer ref={playerRef} videoId={report.videoId} />
-            </div>
+        {/* Outcome-first hero */}
+        <ElevatedCard interactive>
+          <div className="flex flex-col-reverse gap-6 p-8 lg:flex-row lg:items-center">
             <div className="flex-1">
-              <p className="text-xs uppercase tracking-wider text-primary">
+              <p className="text-xs font-medium uppercase tracking-wider text-primary">
                 Learning Report
               </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                {report.title}
+              <h1 className="mt-2 text-[32px] font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
+                Master this video in {minutesToMaster} min
               </h1>
-              <p className="mt-2 truncate text-sm text-muted-foreground">
-                {report.channel} · {report.url}
+              <p className="mt-2 truncate text-[18px] font-medium text-muted-foreground/70">
+                {report.title}
               </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+
+              <div className="mt-6 flex flex-wrap items-center gap-6">
+                <div className="min-w-[160px] flex-1">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                      Time Saved
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {minutesSaved} min
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
+                    <div
+                      className="h-full rounded-full bg-primary/80 transition-all"
+                      style={{ width: `${savedPct}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "h-4 w-4",
+                        i < Math.round(report.overallScore)
+                          ? "fill-primary text-primary"
+                          : "text-muted-foreground/30",
+                      )}
+                    />
+                  ))}
+                  <span className="ml-1.5 text-sm font-medium text-foreground">
+                    {report.overallScore.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <Badge>{report.category}</Badge>
                 <Badge>{Math.round(report.durationSec / 60)} min</Badge>
                 <Badge>{report.language}</Badge>
+                <Badge>
+                  {report.worthWatching === "Yes"
+                    ? "Recommended"
+                    : report.worthWatching === "Skim"
+                      ? "Watch selectively"
+                      : "Skip it"}
+                </Badge>
               </div>
             </div>
+            <div className="w-full lg:w-2/5">
+              <YouTubePlayer ref={playerRef} videoId={report.videoId} />
+            </div>
           </div>
-        </Card>
+        </ElevatedCard>
 
-        {/* Executive Summary */}
+        {/* Executive Summary — split into scannable subsections */}
         <SectionTitle icon={Sparkles}>Executive Summary</SectionTitle>
-        <Card className="h-auto">
-          <p className="p-6 text-sm leading-relaxed text-foreground/90 sm:text-base">
-            {report.executiveSummary}
-          </p>
-        </Card>
-
-        {/* Stats row */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard
-            icon={Clock}
-            label="Time Saved"
-            value={`${Math.round(report.timeSavedSec / 60)} min`}
-            hint={`of ${Math.round(report.durationSec / 60)} min video`}
-          />
-          <StatCard
-            icon={BookOpen}
-            label="Learning Score"
-            value={`${report.overallScore.toFixed(1)} / 5`}
-            hint={renderBooks(report.overallScore)}
-          />
-          <StatCard
-            icon={ThumbsUp}
-            label="Worth Watching"
-            value={report.worthWatching}
-            hint={
-              report.worthWatching === "Yes"
-                ? "Recommended"
-                : report.worthWatching === "Skim"
-                  ? "Watch selectively"
-                  : "Skip it"
-            }
-          />
-        </div>
+        <ElevatedCard>
+          <div className="grid gap-6 p-8 sm:grid-cols-3">
+            <SummaryBlock label="The Idea" text={report.executiveSummary} />
+            <SummaryBlock label="Why It Matters" text={report.scoreExplanation} />
+            <SummaryBlock
+              label="Worth Your Time?"
+              text={
+                report.worthWatching === "Yes"
+                  ? "Yes — this one earns its runtime."
+                  : report.worthWatching === "Skim"
+                    ? "Worth a skim — watch the highlighted sections, skip the rest."
+                    : "No — the Skip Map below shows why."
+              }
+            />
+          </div>
+        </ElevatedCard>
 
         {/* Learning Score detail */}
         <SectionTitle icon={BookOpen}>Learning Score</SectionTitle>
-        <Card>
-          <div className="grid gap-6 p-6 md:grid-cols-2">
+        <ElevatedCard>
+          <div className="grid gap-6 p-8 md:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground">
                 Overall Learning Score
@@ -341,37 +381,38 @@ function Report({ report }: { report: LearningReport }) {
               <div className="mt-2 text-2xl leading-none">
                 {renderBooks(report.overallScore)}
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                {report.scoreExplanation}
-              </p>
             </div>
-            <ul className="space-y-3">
-              {report.scoreBreakdown.map((b) => (
-                <li key={b.label} className="flex items-center gap-3">
-                  <span className="w-40 shrink-0 text-sm text-muted-foreground">
-                    {b.label}
-                  </span>
-                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/60">
-                    <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-primary/80"
-                      style={{ width: `${(b.score / 5) * 100}%` }}
-                    />
-                  </div>
-                  <span className="w-10 text-right text-sm tabular-nums text-foreground">
-                    {b.score.toFixed(1)}
-                  </span>
-                </li>
-              ))}
+            <ul className="space-y-4">
+              {report.scoreBreakdown.map((b) => {
+                const Icon = metricIcon(b.label);
+                return (
+                  <li key={b.label} className="flex items-center gap-3">
+                    <Icon className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="w-32 shrink-0 text-sm text-muted-foreground">
+                      {b.label}
+                    </span>
+                    <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/60">
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-primary/80"
+                        style={{ width: `${(b.score / 5) * 100}%` }}
+                      />
+                    </div>
+                    <span className="w-10 text-right text-sm tabular-nums text-foreground">
+                      {b.score.toFixed(1)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
-        </Card>
+        </ElevatedCard>
 
         {/* Key Insights */}
         <SectionTitle icon={Sparkles}>Key Insights</SectionTitle>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {report.keyInsights.map((insight, i) => (
-            <Card key={i}>
-              <div className="space-y-2 p-5">
+            <ElevatedCard key={i}>
+              <div className="space-y-2 p-6">
                 <p className="text-xs font-medium uppercase tracking-wider text-primary">
                   {insight.title}
                 </p>
@@ -379,14 +420,14 @@ function Report({ report }: { report: LearningReport }) {
                   {insight.body}
                 </p>
               </div>
-            </Card>
+            </ElevatedCard>
           ))}
         </div>
 
         {/* Learning Timeline */}
         <SectionTitle icon={ListTree}>Learning Timeline</SectionTitle>
-        <Card>
-          <ol ref={timelineRef} className="divide-y divide-border/60">
+        <ElevatedCard interactive>
+          <ol ref={timelineRef} className="divide-y divide-border/40">
             {report.chapters.map((c, i) => {
               const isActive = activeChapter === c.id;
               return (
@@ -396,9 +437,7 @@ function Report({ report }: { report: LearningReport }) {
                     onClick={() => handleChapterClick(c.id, c.start)}
                     className={cn(
                       "group flex w-full items-center gap-4 p-5 text-left transition-colors",
-                      isActive
-                        ? "bg-primary/10"
-                        : "hover:bg-secondary/40",
+                      isActive ? "bg-primary/10" : "hover:bg-secondary/40",
                     )}
                   >
                     <span
@@ -427,12 +466,12 @@ function Report({ report }: { report: LearningReport }) {
               );
             })}
           </ol>
-        </Card>
+        </ElevatedCard>
 
         {/* Skip Map */}
         <SectionTitle icon={MapIcon}>Skip Map</SectionTitle>
-        <Card>
-          <div className="space-y-6 p-6">
+        <ElevatedCard interactive>
+          <div className="space-y-6 p-8">
             <div className="relative flex h-3 w-full overflow-hidden rounded-full bg-secondary/60">
               {report.skipMap.map((s) => {
                 const width = ((s.end - s.start) / report.durationSec) * 100;
@@ -495,27 +534,49 @@ function Report({ report }: { report: LearningReport }) {
               })}
             </ul>
           </div>
-        </Card>
+        </ElevatedCard>
 
         {/* Ask AI */}
         <SectionTitle icon={MessagesSquare}>Ask AI</SectionTitle>
-        <Card>
+        <ElevatedCard interactive>
           <AskAi report={report} />
-        </Card>
+        </ElevatedCard>
 
         {/* Quiz */}
         <SectionTitle icon={HelpCircle}>Test Your Knowledge</SectionTitle>
-        <Card>
+        <ElevatedCard interactive>
           <Quiz report={report} />
-        </Card>
+        </ElevatedCard>
 
         {/* Compare */}
         <SectionTitle icon={GitCompare}>Compare Videos</SectionTitle>
-        <Card>
+        <ElevatedCard interactive>
           <Compare report={report} />
-        </Card>
+        </ElevatedCard>
       </div>
     </section>
+  );
+}
+
+function metricIcon(label: string) {
+  const l = label.toLowerCase();
+  if (l.includes("depth")) return BookOpen;
+  if (l.includes("clarity")) return Eye;
+  if (l.includes("accuracy")) return CheckCircle;
+  if (l.includes("structure")) return ListTree;
+  if (l.includes("practical")) return Wrench;
+  if (l.includes("beginner")) return GraduationCap;
+  return BookOpen;
+}
+
+function SummaryBlock({ label, text }: { label: string; text: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+        {label}
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-foreground/90">{text}</p>
+    </div>
   );
 }
 
@@ -540,20 +601,27 @@ function segmentEmoji(kind: SkipSegmentKind): string {
   return "🔴";
 }
 
-function Card({
+/**
+ * Static content cards separate via spacing + shadow, not borders.
+ * Interactive cards (video, timeline, skip map, ask ai, quiz, compare) keep a
+ * subtle border so they still read as clickable/engageable.
+ */
+function ElevatedCard({
   children,
-  className,
+  interactive = false,
 }: {
   children: React.ReactNode;
-  className?: string;
+  interactive?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl",
-        className,
+        "mt-0 overflow-hidden rounded-[20px] bg-card/60 backdrop-blur-xl",
+        interactive && "border border-border/50",
       )}
-      style={{ boxShadow: "var(--shadow-card)" }}
+      style={{
+        boxShadow: "0 1px 2px rgba(0,0,0,0.06), 0 8px 28px rgba(0,0,0,0.10)",
+      }}
     >
       {children}
     </div>
@@ -568,39 +636,12 @@ function SectionTitle({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mt-10 mb-4 flex items-center gap-2">
+    <div className="mt-12 mb-4 flex items-center gap-2">
       <Icon className="h-4 w-4 text-primary" />
       <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
         {children}
       </h2>
     </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  hint: string;
-}) {
-  return (
-    <Card>
-      <div className="p-5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Icon className="h-4 w-4 text-primary" />
-          {label}
-        </div>
-        <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-          {value}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-      </div>
-    </Card>
   );
 }
 
