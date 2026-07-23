@@ -116,16 +116,30 @@ const reportSchema = z.object({
     .min(1),
 });
 
-function fixOutOfRangeTimestamps(text: string, durationSec: number): string {
-  const maxM = Math.floor(durationSec / 60);
-  const maxS = durationSec % 60;
+function sanitizeTimestamps(
+  text: string,
+  validSeconds: number[],
+  durationSec: number,
+): string {
+  if (!validSeconds.length) return text;
   return text.replace(/\b(\d{1,3}):([0-5]\d)\b/g, (match, mStr, sStr) => {
     const m = parseInt(mStr, 10);
     const s = parseInt(sStr, 10);
-    const totalSec = m * 60 + s;
-    if (totalSec <= durationSec) return match;
-    // Out of range — clamp to the video's actual end time instead of leaving a false claim.
-    return `${maxM}:${String(maxS).padStart(2, "0")}`;
+    const totalSec = Math.min(m * 60 + s, durationSec);
+    // Snap to the nearest real chapter/skip-map boundary so prose can never
+    // reference a moment that contradicts the actual timeline shown on the page.
+    let nearest = validSeconds[0];
+    let bestDiff = Math.abs(totalSec - nearest);
+    for (const v of validSeconds) {
+      const diff = Math.abs(totalSec - v);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        nearest = v;
+      }
+    }
+    const nm = Math.floor(nearest / 60);
+    const ns = nearest % 60;
+    return `${nm}:${String(ns).padStart(2, "0")}`;
   });
 }
 
@@ -238,7 +252,7 @@ Return the JSON report now.`;
       id: `c${i}`,
       title: c.title,
       start: Math.min(Math.max(0, Math.floor(c.start)), args.durationSec),
-      summary: fixOutOfRangeTimestamps(c.summary, args.durationSec),
+      summary: c.summary,
     }))
     .sort((a, b) => a.start - b.start);
 
@@ -248,7 +262,30 @@ Return the JSON report now.`;
     label: s.label,
     start: Math.min(Math.max(0, Math.floor(s.start)), args.durationSec),
     end: Math.min(Math.max(0, Math.floor(s.end)), args.durationSec),
-    reason: fixOutOfRangeTimestamps(s.reason, args.durationSec),
+    reason: s.reason,
+  }));
+
+  // Every real "moment" the report actually points to — any timestamp mentioned
+  // in prose gets snapped to the nearest one of these, so prose can never
+  // contradict the Timeline/Skip Map shown on the same page.
+  const validSeconds = Array.from(
+    new Set([
+      0,
+      args.durationSec,
+      ...clampedChapters.map((c) => c.start),
+      ...clampedSkip.flatMap((s) => [s.start, s.end]),
+    ]),
+  ).sort((a, b) => a - b);
+
+  const sanitize = (t: string) => sanitizeTimestamps(t, validSeconds, args.durationSec);
+
+  const sanitizedChapters = clampedChapters.map((c) => ({
+    ...c,
+    summary: sanitize(c.summary),
+  }));
+  const sanitizedSkip = clampedSkip.map((s) => ({
+    ...s,
+    reason: sanitize(s.reason),
   }));
 
   return {
@@ -262,18 +299,18 @@ Return the JSON report now.`;
     timeSavedSec: Math.floor(timeSavedSec),
     worthWatching: r.worthWatching,
     overallScore: Math.round(r.overallScore * 10) / 10,
-    scoreExplanation: fixOutOfRangeTimestamps(r.scoreExplanation, args.durationSec),
+    scoreExplanation: sanitize(r.scoreExplanation),
     scoreBreakdown: r.scoreBreakdown.map((b) => ({
       label: b.label,
       score: Math.round(b.score * 10) / 10,
     })),
-    executiveSummary: fixOutOfRangeTimestamps(r.executiveSummary, args.durationSec),
+    executiveSummary: sanitize(r.executiveSummary),
     keyInsights: r.keyInsights.map((k) => ({
       title: k.title,
-      body: fixOutOfRangeTimestamps(k.body, args.durationSec),
+      body: sanitize(k.body),
     })),
-    chapters: clampedChapters,
-    skipMap: clampedSkip,
+    chapters: sanitizedChapters,
+    skipMap: sanitizedSkip,
   };
 }
 
