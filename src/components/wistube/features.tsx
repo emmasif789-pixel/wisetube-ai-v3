@@ -6,6 +6,9 @@ import {
   ListTree,
   Map,
   MessagesSquare,
+  Scale,
+  GitCompareArrows,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -42,9 +45,24 @@ const features: Feature[] = [
     description: "Know which sections to skip and which to rewatch.",
   },
   {
+    icon: Scale,
+    title: "AI Debate",
+    description: "See both sides of an argument before you take one.",
+  },
+  {
     icon: MessagesSquare,
     title: "Ask AI",
     description: "Ask any question about the video and get answers.",
+  },
+  {
+    icon: GitCompareArrows,
+    title: "Compare Videos",
+    description: "Put two videos side by side and see which wins.",
+  },
+  {
+    icon: HelpCircle,
+    title: "AI Quiz",
+    description: "Test what actually stuck, in under two minutes.",
   },
 ];
 
