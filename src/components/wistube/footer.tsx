@@ -72,7 +72,7 @@ export function Footer() {
             © {new Date().getFullYear()} WisTube AI. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Built to help you learn faster, one video at a time.
+            Made for people who value their time.
           </p>
         </div>
       </div>
