@@ -126,8 +126,6 @@ function sanitizeTimestamps(
     const m = parseInt(mStr, 10);
     const s = parseInt(sStr, 10);
     const totalSec = Math.min(m * 60 + s, durationSec);
-    // Snap to the nearest real chapter/skip-map boundary so prose can never
-    // reference a moment that contradicts the actual timeline shown on the page.
     let nearest = validSeconds[0];
     let bestDiff = Math.abs(totalSec - nearest);
     for (const v of validSeconds) {
@@ -143,13 +141,61 @@ function sanitizeTimestamps(
   });
 }
 
+// Groq free tier caps llama-3.3-70b-versatile at ~12,000 tokens/minute.
+// That limit counts PROMPT tokens + the max_tokens you request for the
+// completion — not just what's actually generated. Previously max_tokens
+// was unset, so Groq reserved the model's full default output allowance
+// and rejected the request as "too large" even on short transcripts.
+const MAX_COMPLETION_TOKENS = 2000;
+
+// Total character budget for the transcript text we send in the prompt.
+// ~4 chars/token, kept well under the TPM ceiling alongside the system
+// prompt and MAX_COMPLETION_TOKENS reservation above.
+const MAX_TRANSCRIPT_CHARS = 16000;
+
+// Instead of slicing only the START of the transcript (which meant a 3hr
+// video was only ever analyzed on its first ~20 minutes), sample evenly
+// spaced windows across the FULL duration so every video — regardless of
+// length — gets proportional coverage of its beginning, middle, and end.
+function sampleTranscript(full: string, maxChars: number): { text: string; sampled: boolean } {
+  if (full.length <= maxChars) return { text: full, sampled: false };
+
+  const lines = full.split("\n");
+  const totalChars = full.length;
+  const windowCount = 8; // number of evenly spaced windows across the video
+  const charsPerWindow = Math.floor(maxChars / windowCount);
+
+  const picked: string[] = [];
+  for (let w = 0; w < windowCount; w++) {
+    const targetCharStart = Math.floor((totalChars / windowCount) * w);
+    // find the line index nearest this character offset
+    let acc = 0;
+    let startLine = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (acc >= targetCharStart) {
+        startLine = i;
+        break;
+      }
+      acc += lines[i].length + 1;
+    }
+    let windowText = "";
+    let i = startLine;
+    while (i < lines.length && windowText.length < charsPerWindow) {
+      windowText += lines[i] + "\n";
+      i++;
+    }
+    if (windowText) picked.push(windowText.trim());
+  }
+
+  return { text: picked.join("\n...\n"), sampled: true };
+}
+
 async function generateReport(args: {
   url: string;
   videoId: string;
   transcript: string;
   durationSec: number;
 }): Promise<LearningReport> {
-  void 0;
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -173,17 +219,16 @@ async function generateReport(args: {
   "skipMap": [ {"kind": "watch"|"optional"|"skip", "label": string, "start": number, "end": number, "reason": string} ] // 4-6 items covering the video
 }`;
 
-  // Groq free tier caps llama-3.3-70b-versatile at ~12,000 tokens/minute (~4 chars/token).
-  // Keep total prompt (system + user) comfortably under that, and for large transcripts
-  // start with the smaller/cheaper model which has more headroom.
-  const MAX_TRANSCRIPT_CHARS = 20000;
-  const transcriptForPrompt = args.transcript.slice(0, MAX_TRANSCRIPT_CHARS);
-  const isLarge = args.transcript.length > MAX_TRANSCRIPT_CHARS;
+  const { text: transcriptForPrompt, sampled } = sampleTranscript(
+    args.transcript,
+    MAX_TRANSCRIPT_CHARS,
+  );
+  const isLarge = sampled;
 
   const user = `Video URL: ${args.url}
 Video duration: ${args.durationSec} seconds.
 
-Transcript (each line prefixed with [start_seconds]${isLarge ? ", truncated to fit — infer the rest of the video's structure proportionally from what's shown" : ""}):
+Transcript (each line prefixed with [start_seconds]${isLarge ? ", sampled evenly across the full video — sections are separated by '...' markers; infer the connecting content between samples proportionally" : ""}):
 ${transcriptForPrompt}
 
 Return the JSON report now.`;
@@ -208,11 +253,11 @@ Return the JSON report now.`;
           { role: "user", content: user },
         ],
         response_format: { type: "json_object" },
+        max_tokens: MAX_COMPLETION_TOKENS,
       }),
     });
     lastStatus = res.status;
     if (res.ok) break;
-    // On rate-limit/quota/payload-too-large errors, try the next model.
     if (res.status !== 429 && res.status !== 503 && res.status !== 413) break;
   }
 
@@ -233,13 +278,11 @@ Return the JSON report now.`;
   } catch {
     throw new Error("AI returned malformed output.");
   }
-  // Some smaller models occasionally wrap the object in an array — unwrap if so.
   if (Array.isArray(parsed)) {
     parsed = parsed[0];
   }
   const r = reportSchema.parse(parsed);
 
-  // Compute time saved from skip map (skip = full, optional = half)
   const timeSavedSec = r.skipMap.reduce((acc, s) => {
     const len = Math.max(0, s.end - s.start);
     if (s.kind === "skip") return acc + len;
@@ -265,9 +308,6 @@ Return the JSON report now.`;
     reason: s.reason,
   }));
 
-  // Every real "moment" the report actually points to — any timestamp mentioned
-  // in prose gets snapped to the nearest one of these, so prose can never
-  // contradict the Timeline/Skip Map shown on the same page.
   const validSeconds = Array.from(
     new Set([
       0,
