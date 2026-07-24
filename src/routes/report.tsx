@@ -301,13 +301,15 @@ function Report({ report }: { report: LearningReport }) {
                       Time Saved
                     </span>
                     <span className="font-medium text-foreground">
-                      {minutesSaved} min
+                      {minutesSaved > 0
+                        ? `${minutesSaved} min`
+                        : "Every second pulls its weight"}
                     </span>
                   </div>
                   <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
                     <div
                       className="h-full rounded-full bg-primary/80 transition-all"
-                      style={{ width: `${savedPct}%` }}
+                      style={{ width: `${minutesSaved > 0 ? savedPct : 100}%` }}
                     />
                   </div>
                 </div>
