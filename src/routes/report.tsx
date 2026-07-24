@@ -38,6 +38,7 @@ import {
 import { AskAi } from "@/components/wistube/ask-ai";
 import { Quiz } from "@/components/wistube/quiz";
 import { Compare } from "@/components/wistube/compare";
+import { Debate } from "@/components/wistube/debate";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ url: z.string().optional() });
@@ -365,6 +366,13 @@ function Report({ report }: { report: LearningReport }) {
               }
             />
           </div>
+        </ElevatedCard>
+
+        {/* AI Debate — generated asynchronously in the background; renders
+            nothing at all if generation fails, so it never shows an error
+            state to the user. */}
+        <ElevatedCard interactive>
+          <Debate report={report} />
         </ElevatedCard>
 
         {/* Learning Score detail */}
