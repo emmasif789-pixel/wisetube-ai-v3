@@ -10,12 +10,20 @@ import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+const SUGGESTIONS = [
+  "Explain this like I'm 12",
+  "Give me the action items",
+  "What's the weakest part of this argument?",
+  "Summarize the strongest section",
+];
+
 export function AskAi({ report }: { report: LearningReport }) {
   const chat = useServerFn(chatAboutVideo);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -57,6 +65,12 @@ export function AskAi({ report }: { report: LearningReport }) {
     }
   };
 
+  const askSuggestion = (q: string) => {
+    if (loading) return;
+    setInput(q);
+    setTimeout(() => formRef.current?.requestSubmit(), 0);
+  };
+
   return (
     <div className="flex flex-col">
       <div
@@ -71,6 +85,18 @@ export function AskAi({ report }: { report: LearningReport }) {
             <p className="mx-auto mt-4 max-w-xs text-sm text-muted-foreground">
               Ask any question about this video — timelines, takeaways, or examples.
             </p>
+            <div className="mx-auto mt-5 flex max-w-md flex-wrap justify-center gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => askSuggestion(s)}
+                  className="rounded-full border border-border/60 bg-secondary/40 px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         <AnimatePresence initial={false}>
@@ -118,6 +144,7 @@ export function AskAi({ report }: { report: LearningReport }) {
         </AnimatePresence>
       </div>
       <form
+        ref={formRef}
         onSubmit={send}
         className="flex gap-2 border-t border-border/60 p-3"
       >
