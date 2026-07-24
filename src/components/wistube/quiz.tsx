@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { Check, Clock, HelpCircle, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { generateQuiz, type QuizQuestion } from "@/lib/quiz.functions";
@@ -74,22 +74,30 @@ export function Quiz({ report }: { report: LearningReport }) {
     return (
       <div className="p-6 text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <HelpCircle className="h-5 w-5 text-primary" />
         </div>
         <p className="mx-auto mt-4 max-w-sm text-sm text-muted-foreground">
-          Test your understanding with a 5-question quiz generated from this video.
+          Test your understanding with a quiz generated from this video.
         </p>
+        <div className="mx-auto mt-4 flex max-w-xs items-center justify-center gap-4 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <HelpCircle className="h-3.5 w-3.5 text-primary" /> 5 Questions
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-primary" /> ~90 seconds
+          </span>
+        </div>
         <Button
           onClick={start}
           disabled={loading}
-          className="mt-4 h-10 rounded-xl px-5"
+          className="mt-5 h-10 rounded-xl px-5"
         >
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating…
             </>
           ) : (
-            "Start Quiz"
+            "Start Quiz →"
           )}
         </Button>
       </div>
