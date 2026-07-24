@@ -1,7 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/wistube/navbar";
 import { Footer } from "@/components/wistube/footer";
 import { Aurora } from "@/components/wistube/aurora";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/about")({
   component: About,
@@ -14,6 +16,16 @@ function About() {
       <Navbar />
       <section className="relative py-28 sm:py-36">
         <div className="mx-auto max-w-3xl px-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-6 -ml-2 text-muted-foreground hover:text-foreground"
+            asChild
+          >
+            <Link to="/">
+              <ArrowLeft className="mr-1 h-4 w-4" /> Back
+            </Link>
+          </Button>
           <p className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-primary backdrop-blur">
             <span className="h-1 w-1 rounded-full bg-primary" />
             About
