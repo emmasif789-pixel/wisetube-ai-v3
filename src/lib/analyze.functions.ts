@@ -233,9 +233,11 @@ ${transcriptForPrompt}
 
 Return the JSON report now.`;
 
-  const models = isLarge
-    ? ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
-    : ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+  // Defaulting to 8b-instant first for every request, not just large ones —
+  // Groq's free-tier TPM budget for 8b is meaningfully higher than 70b, so
+  // this is the single biggest lever for not hitting rate limits during
+  // live judging. 70b stays as fallback for a quality retry if 8b fails.
+  const models = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
   let res: Response | null = null;
   let lastStatus = 0;
 
