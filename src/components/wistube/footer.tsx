@@ -1,25 +1,26 @@
+import { Link } from "@tanstack/react-router";
 import { Logo } from "./logo";
 
 const groups = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "#features" },
-      { label: "About", href: "#about" },
+      { label: "Features", href: "#features", external: false, anchor: true },
+      { label: "About", href: "/about", external: false, anchor: false },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "Contact", href: "#" },
-      { label: "Twitter", href: "#" },
+      { label: "Contact", href: "/contact", external: false, anchor: false },
+      { label: "Twitter", href: "https://x.com/EmanAsifD", external: true, anchor: false },
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Privacy", href: "#" },
-      { label: "Terms", href: "#" },
+      { label: "Privacy", href: "/privacy", external: false, anchor: false },
+      { label: "Terms", href: "/terms", external: false, anchor: false },
     ],
   },
 ];
@@ -39,16 +40,29 @@ export function Footer() {
             <div key={g.title}>
               <h4 className="text-sm font-semibold text-foreground">{g.title}</h4>
               <ul className="mt-3 space-y-2">
-                {g.links.map((l) => (
-                  <li key={l.label}>
-                    <a
-                      href={l.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {l.label}
-                    </a>
-                  </li>
-                ))}
+                {g.links.map((l) =>
+                  l.external || l.anchor ? (
+                    <li key={l.label}>
+                      <a
+                        href={l.href}
+                        target={l.external ? "_blank" : undefined}
+                        rel={l.external ? "noopener noreferrer" : undefined}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {l.label}
+                      </a>
+                    </li>
+                  ) : (
+                    <li key={l.label}>
+                      <Link
+                        to={l.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           ))}
@@ -58,7 +72,7 @@ export function Footer() {
             © {new Date().getFullYear()} WisTube AI. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Made for people who value their time.
+            Built to help you learn faster, one video at a time.
           </p>
         </div>
       </div>
