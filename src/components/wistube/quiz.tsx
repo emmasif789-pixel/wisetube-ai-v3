@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Clock, HelpCircle, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
@@ -69,6 +69,21 @@ export function Quiz({ report }: { report: LearningReport }) {
     setIndex(0);
     setScore(0);
   };
+
+  // Once an answer is picked, pressing Enter advances to the next question —
+  // same action as clicking the "Next" button. Only active while a quiz is
+  // in progress and an answer has been selected for the current question.
+  useEffect(() => {
+    if (!questions || done || selected === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        next();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [questions, done, selected, index]);
 
   if (!questions) {
     return (
