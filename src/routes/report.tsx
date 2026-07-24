@@ -437,8 +437,10 @@ function Report({ report }: { report: LearningReport }) {
                     type="button"
                     onClick={() => handleChapterClick(c.id, c.start)}
                     className={cn(
-                      "group flex w-full items-center gap-4 p-5 text-left transition-colors",
-                      isActive ? "bg-primary/10" : "hover:bg-secondary/40",
+                      "group flex w-full items-center gap-4 border-l-2 p-5 text-left transition-all",
+                      isActive
+                        ? "border-l-primary bg-primary/10"
+                        : "border-l-transparent hover:border-l-primary/50 hover:bg-secondary/40",
                     )}
                   >
                     <span
