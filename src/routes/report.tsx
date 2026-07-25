@@ -6,21 +6,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   ArrowLeft,
-  BookOpen,
-  CheckCircle,
   Clock,
-  Eye,
+  Dna,
   GitCompare,
-  GraduationCap,
   HelpCircle,
   ListTree,
   Map as MapIcon,
   MessagesSquare,
   Play,
   Sparkles,
-  Star,
-  ThumbsUp,
-  Wrench,
 } from "lucide-react";
 import { z } from "zod";
 import { Navbar } from "@/components/wistube/navbar";
@@ -232,6 +226,23 @@ function ShimmerCard({ className = "" }: { className?: string }) {
   );
 }
 
+const VERDICT_META: Record<
+  LearningReport["worthWatching"],
+  { label: string; dot: string }
+> = {
+  Yes: { label: "Watch in full", dot: "bg-emerald-500" },
+  Skim: { label: "Watch only key sections", dot: "bg-amber-400" },
+  No: { label: "Skip it", dot: "bg-red-500" },
+};
+
+function dnaSummaryLine(dna: LearningReport["videoDna"]): string {
+  return [...dna]
+    .sort((a, b) => b.percentage - a.percentage)
+    .slice(0, 3)
+    .map((c) => `${c.percentage}% ${c.label}`)
+    .join(" • ");
+}
+
 function Report({ report }: { report: LearningReport }) {
   const playerRef = useRef<YouTubePlayerHandle>(null);
   const [activeChapter, setActiveChapter] = useState<string | null>(null);
@@ -256,6 +267,7 @@ function Report({ report }: { report: LearningReport }) {
     jumpTo(start);
   };
 
+  const totalMin = Math.max(1, Math.round(report.durationSec / 60));
   const minutesSaved = Math.max(0, Math.round(report.timeSavedSec / 60));
   const minutesToMaster = Math.max(
     1,
@@ -264,6 +276,8 @@ function Report({ report }: { report: LearningReport }) {
   const savedPct = report.durationSec
     ? Math.min(100, Math.round((report.timeSavedSec / report.durationSec) * 100))
     : 0;
+
+  const verdict = VERDICT_META[report.worthWatching];
 
   return (
     <section className="relative pt-32 pb-24 sm:pt-40">
@@ -279,7 +293,7 @@ function Report({ report }: { report: LearningReport }) {
           </a>
         </Button>
 
-        {/* Outcome-first hero */}
+        {/* Hero — title, compact Time Saved / Verdict / Video DNA at a glance */}
         <ElevatedCard interactive>
           <div className="flex flex-col-reverse gap-6 p-8 lg:flex-row lg:items-center">
             <div className="flex-1">
@@ -287,61 +301,42 @@ function Report({ report }: { report: LearningReport }) {
                 Learning Report
               </p>
               <h1 className="mt-2 text-[32px] font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
-                Master this video in {minutesToMaster} min
-              </h1>
-              <p className="mt-2 truncate text-[18px] font-medium text-muted-foreground/70">
                 {report.title}
-              </p>
+              </h1>
 
-              <div className="mt-6 flex flex-wrap items-center gap-6">
-                <div className="min-w-[160px] flex-1">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-primary" />
-                      Time Saved
+              <div className="mt-5 space-y-3">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="font-medium text-foreground">
+                    {minutesSaved > 0
+                      ? `Save ${minutesSaved} min (${totalMin} → ${minutesToMaster})`
+                      : "Every second pulls its weight"}
+                  </span>
+                  {minutesSaved > 0 && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {savedPct}% faster
                     </span>
-                    <span className="font-medium text-foreground">
-                      {minutesSaved > 0
-                        ? `${minutesSaved} min`
-                        : "Every second pulls its weight"}
-                    </span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
-                    <div
-                      className="h-full rounded-full bg-primary/80 transition-all"
-                      style={{ width: `${minutesSaved > 0 ? savedPct : 100}%` }}
-                    />
-                  </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-1">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <Star
-                      key={i}
-                      className={cn(
-                        "h-4 w-4",
-                        i < Math.round(report.overallScore)
-                          ? "fill-primary text-primary"
-                          : "text-muted-foreground/30",
-                      )}
-                    />
-                  ))}
-                  <span className="ml-1.5 text-sm font-medium text-foreground">
-                    {report.overallScore.toFixed(1)}
+
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", verdict.dot)} />
+                  <span className="font-medium text-foreground">Verdict:</span>
+                  <span className="text-muted-foreground">{verdict.label}</span>
+                </div>
+
+                <div className="flex items-start gap-2 text-sm">
+                  <Dna className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="text-muted-foreground">
+                    {dnaSummaryLine(report.videoDna)}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <div className="mt-5 flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <Badge>{report.category}</Badge>
-                <Badge>{Math.round(report.durationSec / 60)} min</Badge>
+                <Badge>{totalMin} min</Badge>
                 <Badge>{report.language}</Badge>
-                <Badge>
-                  {report.worthWatching === "Yes"
-                    ? "Recommended"
-                    : report.worthWatching === "Skim"
-                      ? "Watch selectively"
-                      : "Skip it"}
-                </Badge>
               </div>
             </div>
             <div className="w-full lg:w-2/5">
@@ -350,8 +345,8 @@ function Report({ report }: { report: LearningReport }) {
           </div>
         </ElevatedCard>
 
-        {/* Executive Summary — split into scannable subsections */}
-        <SectionTitle icon={Sparkles}>Executive Summary</SectionTitle>
+        {/* Learning Summary */}
+        <SectionTitle icon={Sparkles}>Learning Summary</SectionTitle>
         <ElevatedCard>
           <div className="grid gap-6 p-8 sm:grid-cols-3">
             <SummaryBlock label="The Idea" text={report.executiveSummary} onJump={jumpTo} />
@@ -368,117 +363,6 @@ function Report({ report }: { report: LearningReport }) {
               }
             />
           </div>
-        </ElevatedCard>
-
-        {/* AI Debate — generated asynchronously in the background; renders
-            nothing at all if generation fails, so it never shows an error
-            state to the user. */}
-        <ElevatedCard interactive>
-          <Debate report={report} />
-        </ElevatedCard>
-
-        {/* Learning Score detail */}
-        <SectionTitle icon={BookOpen}>Learning Score</SectionTitle>
-        <ElevatedCard>
-          <div className="grid gap-6 p-8 md:grid-cols-2">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                Overall Learning Score
-              </p>
-              <div className="mt-2 text-4xl font-semibold tracking-tight">
-                {report.overallScore.toFixed(1)}{" "}
-                <span className="text-lg text-muted-foreground">/ 5</span>
-              </div>
-              <div className="mt-2 text-2xl leading-none">
-                {renderBooks(report.overallScore)}
-              </div>
-            </div>
-            <ul className="space-y-4">
-              {report.scoreBreakdown.map((b) => {
-                const Icon = metricIcon(b.label);
-                return (
-                  <li key={b.label} className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 shrink-0 text-primary" />
-                    <span className="w-32 shrink-0 text-sm text-muted-foreground">
-                      {b.label}
-                    </span>
-                    <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/60">
-                      <div
-                        className="absolute inset-y-0 left-0 rounded-full bg-primary/80"
-                        style={{ width: `${(b.score / 5) * 100}%` }}
-                      />
-                    </div>
-                    <span className="w-10 text-right text-sm tabular-nums text-foreground">
-                      {b.score.toFixed(1)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </ElevatedCard>
-
-        {/* Key Insights */}
-        <SectionTitle icon={Sparkles}>Key Insights</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {report.keyInsights.map((insight, i) => (
-            <ElevatedCard key={i}>
-              <div className="space-y-2 p-6">
-                <p className="text-xs font-medium uppercase tracking-wider text-primary">
-                  {insight.title}
-                </p>
-                <p className="text-sm leading-relaxed text-foreground/90">
-                  <TextWithTimestamps text={insight.body} onJump={jumpTo} />
-                </p>
-              </div>
-            </ElevatedCard>
-          ))}
-        </div>
-
-        {/* Learning Timeline */}
-        <SectionTitle icon={ListTree}>Learning Timeline</SectionTitle>
-        <ElevatedCard interactive>
-          <ol ref={timelineRef} className="divide-y divide-border/40">
-            {report.chapters.map((c, i) => {
-              const isActive = activeChapter === c.id;
-              return (
-                <li key={c.id} data-chapter={c.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleChapterClick(c.id, c.start)}
-                    className={cn(
-                      "group flex w-full items-center gap-4 border-l-2 p-5 text-left transition-all",
-                      isActive
-                        ? "border-l-primary bg-primary/10"
-                        : "border-l-transparent hover:border-l-primary/50 hover:bg-secondary/40",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs transition-colors",
-                        isActive
-                          ? "border-primary/60 bg-primary/20 text-primary"
-                          : "border-border/70 bg-secondary/60 text-primary group-hover:border-primary/40",
-                      )}
-                    >
-                      <Play className="h-3.5 w-3.5 fill-current" />
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">
-                        {String(i + 1).padStart(2, "0")} · {c.title}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {c.summary}
-                      </p>
-                    </div>
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      {formatTimestamp(c.start)}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
         </ElevatedCard>
 
         {/* Skip Map */}
@@ -549,6 +433,65 @@ function Report({ report }: { report: LearningReport }) {
           </div>
         </ElevatedCard>
 
+        {/* Learning Timeline */}
+        <SectionTitle icon={ListTree}>Learning Timeline</SectionTitle>
+        <ElevatedCard interactive>
+          <ol ref={timelineRef} className="divide-y divide-border/40">
+            {report.chapters.map((c, i) => {
+              const isActive = activeChapter === c.id;
+              return (
+                <li key={c.id} data-chapter={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleChapterClick(c.id, c.start)}
+                    className={cn(
+                      "group flex w-full items-center gap-4 border-l-2 p-5 text-left transition-all",
+                      isActive
+                        ? "border-l-primary bg-primary/10"
+                        : "border-l-transparent hover:border-l-primary/50 hover:bg-secondary/40",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs transition-colors",
+                        isActive
+                          ? "border-primary/60 bg-primary/20 text-primary"
+                          : "border-border/70 bg-secondary/60 text-primary group-hover:border-primary/40",
+                      )}
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">
+                        {String(i + 1).padStart(2, "0")} · {c.title}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {c.summary}
+                      </p>
+                    </div>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {formatTimestamp(c.start)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </ElevatedCard>
+
+        {/* Debate / Different Perspectives — generated asynchronously in the
+            background; renders nothing at all if generation fails, so it
+            never shows an error state to the user. */}
+        <ElevatedCard interactive>
+          <Debate report={report} />
+        </ElevatedCard>
+
+        {/* Compare Videos */}
+        <SectionTitle icon={GitCompare}>Compare Videos</SectionTitle>
+        <ElevatedCard interactive>
+          <Compare report={report} />
+        </ElevatedCard>
+
         {/* Ask AI */}
         <SectionTitle icon={MessagesSquare}>Ask AI</SectionTitle>
         <ElevatedCard interactive>
@@ -560,26 +503,9 @@ function Report({ report }: { report: LearningReport }) {
         <ElevatedCard interactive>
           <Quiz report={report} />
         </ElevatedCard>
-
-        {/* Compare */}
-        <SectionTitle icon={GitCompare}>Compare Videos</SectionTitle>
-        <ElevatedCard interactive>
-          <Compare report={report} />
-        </ElevatedCard>
       </div>
     </section>
   );
-}
-
-function metricIcon(label: string) {
-  const l = label.toLowerCase();
-  if (l.includes("depth")) return BookOpen;
-  if (l.includes("clarity")) return Eye;
-  if (l.includes("accuracy")) return CheckCircle;
-  if (l.includes("structure")) return ListTree;
-  if (l.includes("practical")) return Wrench;
-  if (l.includes("beginner")) return GraduationCap;
-  return BookOpen;
 }
 
 function TextWithTimestamps({
@@ -630,11 +556,6 @@ function SummaryBlock({
       </p>
     </div>
   );
-}
-
-function renderBooks(score: number): string {
-  const full = Math.round(score);
-  return "📚".repeat(full) + "☆".repeat(Math.max(0, 5 - full));
 }
 
 function segmentBgClass(kind: SkipSegmentKind): string {
