@@ -23,6 +23,13 @@ export interface ScoreBreakdownItem {
   score: number; // 0-5
 }
 
+// Video DNA — a proportional breakdown of what the video's runtime is
+// actually made of. Percentages should sum to ~100.
+export interface VideoDnaCategory {
+  label: string;
+  percentage: number;
+}
+
 export interface LearningReport {
   videoId: string;
   url: string;
@@ -40,6 +47,7 @@ export interface LearningReport {
   keyInsights: { title: string; body: string }[];
   chapters: Chapter[];
   skipMap: SkipSegment[];
+  videoDna: VideoDnaCategory[];
 }
 
 // Deterministic pseudo-random from a string
@@ -184,6 +192,15 @@ export function buildReport(url: string, videoId: string): LearningReport {
     1,
   )} out of 5 for being genuinely useful without wasting your time.`;
 
+  const videoDna: VideoDnaCategory[] = [
+    { label: "Core Concepts", percentage: 35 },
+    { label: "Examples", percentage: 25 },
+    { label: "Stories", percentage: 20 },
+    { label: "Repetition", percentage: 12 },
+    { label: "Sponsor/Promotion", percentage: 5 },
+    { label: "Filler", percentage: 3 },
+  ];
+
   return {
     videoId,
     url,
@@ -201,5 +218,6 @@ export function buildReport(url: string, videoId: string): LearningReport {
     keyInsights,
     chapters,
     skipMap,
+    videoDna,
   };
 }
