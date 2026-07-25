@@ -115,6 +115,10 @@ const reportSchema = z.object({
       }),
     )
     .min(1),
+  videoDna: z
+    .array(z.object({ label: z.string(), percentage: z.number().min(0).max(100) }))
+    .min(4)
+    .max(6),
 });
 
 function sanitizeTimestamps(
@@ -206,7 +210,8 @@ async function generateReport(args: {
   "executiveSummary": string,    // 3-5 sentences, mention strongest section with timestamps
   "keyInsights": [ {"title": string, "body": string} ],       // 4 items
   "chapters": [ {"title": string, "start": number, "summary": string} ], // 4-7 items
-  "skipMap": [ {"kind": "watch"|"optional"|"skip", "label": string, "start": number, "end": number, "reason": string} ] // 4-6 items covering the video
+  "skipMap": [ {"kind": "watch"|"optional"|"skip", "label": string, "start": number, "end": number, "reason": string} ], // 4-6 items covering the video
+  "videoDna": [ {"label": string, "percentage": number} ] // Break the ENTIRE video's runtime into these exact 6 categories, percentages must sum to 100: "Core Concepts", "Examples", "Stories", "Repetition", "Sponsor/Promotion", "Filler". Estimate honestly based on the transcript's actual content mix — do not default to even splits.
 }`;
 
   const { text: transcriptForPrompt, sampled } = sampleTranscript(
@@ -310,6 +315,7 @@ Return the JSON report now.`;
     })),
     chapters: sanitizedChapters,
     skipMap: sanitizedSkip,
+    videoDna: r.videoDna,
   };
 }
 
