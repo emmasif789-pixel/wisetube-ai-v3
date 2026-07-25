@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { LearningReport, SkipSegmentKind } from "./report-data";
+import { callGroq } from "./groq-client";
 
 function extractVideoId(url: string): string | null {
   try {
@@ -141,16 +142,13 @@ function sanitizeTimestamps(
   });
 }
 
-// Groq free tier caps llama-3.3-70b-versatile at ~12,000 tokens/minute.
-// That limit counts PROMPT tokens + the max_tokens you request for the
-// completion — not just what's actually generated. Previously max_tokens
-// was unset, so Groq reserved the model's full default output allowance
-// and rejected the request as "too large" even on short transcripts.
+// A full analysis request (system prompt + sampled transcript + reserved
+// completion tokens) runs ~6,500 tokens on llama-3.3-70b-versatile, which
+// has a 12,000 TPM / 100,000 TPD budget on the free tier — the only model
+// with enough headroom for this call size (llama-3.1-8b-instant's 6,000 TPM
+// budget is too small for it). See groq-client.ts for key rotation, which
+// is the real lever for scaling total daily capacity beyond one key's cap.
 const MAX_COMPLETION_TOKENS = 2000;
-
-// Total character budget for the transcript text we send in the prompt.
-// ~4 chars/token, kept well under the TPM ceiling alongside the system
-// prompt and MAX_COMPLETION_TOKENS reservation above.
 const MAX_TRANSCRIPT_CHARS = 16000;
 
 // Instead of slicing only the START of the transcript (which meant a 3hr
@@ -162,13 +160,12 @@ function sampleTranscript(full: string, maxChars: number): { text: string; sampl
 
   const lines = full.split("\n");
   const totalChars = full.length;
-  const windowCount = 8; // number of evenly spaced windows across the video
+  const windowCount = 8;
   const charsPerWindow = Math.floor(maxChars / windowCount);
 
   const picked: string[] = [];
   for (let w = 0; w < windowCount; w++) {
     const targetCharStart = Math.floor((totalChars / windowCount) * w);
-    // find the line index nearest this character offset
     let acc = 0;
     let startLine = 0;
     for (let i = 0; i < lines.length; i++) {
@@ -196,13 +193,6 @@ async function generateReport(args: {
   transcript: string;
   durationSec: number;
 }): Promise<LearningReport> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "AI key missing. Please add your GROQ_API_KEY to enable analysis.",
-    );
-  }
-
   const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. Be honest — if the video is thin or filler-heavy, say so. This video is exactly ${args.durationSec} seconds long (${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")}). All numeric "start"/"end" fields (in chapters and skipMap) are in SECONDS and MUST be between 0 and ${args.durationSec} — never exceed this. CRITICAL: whenever you refer to a time in PROSE TEXT (executiveSummary, scoreExplanation, keyInsights, reason fields), you MUST write it as mm:ss (e.g. "5:37"), and that time MUST be less than or equal to ${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")} (the video's actual length). NEVER invent or estimate a timestamp — only reference times that correspond to an actual moment in the transcript provided below. Do not write a prose timestamp higher than the video's total duration under any circumstance. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
 {
   "title": string,               // best guess of the video's title/topic
@@ -223,57 +213,24 @@ async function generateReport(args: {
     args.transcript,
     MAX_TRANSCRIPT_CHARS,
   );
-  const isLarge = sampled;
 
   const user = `Video URL: ${args.url}
 Video duration: ${args.durationSec} seconds.
 
-Transcript (each line prefixed with [start_seconds]${isLarge ? ", sampled evenly across the full video — sections are separated by '...' markers; infer the connecting content between samples proportionally" : ""}):
+Transcript (each line prefixed with [start_seconds]${sampled ? ", sampled evenly across the full video — sections are separated by '...' markers; infer the connecting content between samples proportionally" : ""}):
 ${transcriptForPrompt}
 
 Return the JSON report now.`;
 
-  // Defaulting to 8b-instant first for every request, not just large ones —
-  // Groq's free-tier TPM budget for 8b is meaningfully higher than 70b, so
-  // this is the single biggest lever for not hitting rate limits during
-  // live judging. 70b stays as fallback for a quality retry if 8b fails.
-  const models = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"];
-  let res: Response | null = null;
-  let lastStatus = 0;
+  const content = await callGroq({
+    models: ["llama-3.3-70b-versatile"],
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    maxTokens: MAX_COMPLETION_TOKENS,
+  });
 
-  for (const model of models) {
-    res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: MAX_COMPLETION_TOKENS,
-      }),
-    });
-    lastStatus = res.status;
-    if (res.ok) break;
-    if (res.status !== 429 && res.status !== 503 && res.status !== 413) break;
-  }
-
-  if (!res) throw new Error("AI analysis failed. Please try again.");
-  if (!res.ok) {
-    if (lastStatus === 429) throw new Error("AI is busy right now. Please try again in a moment.");
-    const body = await res.text().catch(() => "");
-    throw new Error(`AI analysis failed (${lastStatus}). ${body.slice(0, 200)}`);
-  }
-  const json = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = json.choices?.[0]?.message?.content;
-  if (!content) throw new Error("AI returned an empty response.");
   let parsed: unknown;
   try {
     parsed = JSON.parse(extractJson(content));
