@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { callGroq } from "./groq-client";
 
 export type DebateResult =
   | {
@@ -74,12 +75,6 @@ function shouldUseDebateMode(category: string): boolean {
 export const generateDebate = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ context: contextSchema }).parse(i))
   .handler(async ({ data }): Promise<DebateResult> => {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey)
-      throw new Error(
-        "AI key missing. Please add your GROQ_API_KEY to enable AI Debate.",
-      );
-
     const useDebate = shouldUseDebateMode(data.context.category);
 
     const ctx = `Video: ${data.context.title}
@@ -93,38 +88,15 @@ ${data.context.keyInsights.map((k) => `- ${k.title}: ${k.body}`).join("\n")}`;
 
     const alternativesSystem = `You are an educational assistant helping viewers compare methods. Based on the tutorial/factual video below, produce a comparison of approaches. Rules: primaryApproach = 2-4 short bullet points summarizing the method/approach shown in the video. alternativeApproaches = 2-4 short bullet points describing other valid methods to achieve the same goal, and briefly why someone might choose them instead. recommendation = 2-3 neutral sentences on when to use the video's approach vs. the alternatives. Return JSON only in this shape: {"primaryApproach":[string,...],"alternativeApproaches":[string,...],"recommendation":string}`;
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: useDebate ? debateSystem : alternativesSystem,
-          },
-          { role: "user", content: ctx },
-        ],
-        temperature: 0.6,
-        max_tokens: 700,
-      }),
+    const content = await callGroq({
+      models: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
+      messages: [
+        { role: "system", content: useDebate ? debateSystem : alternativesSystem },
+        { role: "user", content: ctx },
+      ],
+      maxTokens: 700,
+      temperature: 0.6,
     });
-
-    if (!res.ok) {
-      if (res.status === 429)
-        throw new Error("AI is busy right now. Please try again in a moment.");
-      throw new Error("AI Debate generation failed.");
-    }
-
-    const j = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const content = j.choices?.[0]?.message?.content;
-    if (!content) throw new Error("AI returned an empty response.");
 
     let parsed: unknown;
     try {
