@@ -16,6 +16,7 @@ export interface SkipSegment {
   start: number;
   end: number;
   reason: string;
+  isBestMoment: boolean;
 }
 
 export interface ScoreBreakdownItem {
@@ -150,6 +151,7 @@ export function buildReport(url: string, videoId: string): LearningReport {
     start: cuts[i],
     end: cuts[i + 1],
     reason: reasons[kind],
+    isBestMoment: kind === "watch" && i === kinds.indexOf("watch"),
   }));
 
   const timeSavedSec = skipMap
