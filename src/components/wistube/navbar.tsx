@@ -31,10 +31,10 @@ export function Navbar() {
             Features
           </Link>
           <Link
-            to="/contact"
+            to="/compare"
             className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-foreground/[0.05] hover:text-foreground"
           >
-            Contact
+            Compare
           </Link>
           <div className="ml-2 h-5 w-px bg-border/80" />
           <a
