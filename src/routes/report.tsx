@@ -239,12 +239,12 @@ const VERDICT_META: Record<
 };
 
 const DNA_COLOR_MAP: Record<string, string> = {
-  "Core Concepts": "bg-primary/80",
-  Examples: "bg-emerald-500/80",
-  Stories: "bg-blue-500/80",
+  "Core Concepts": "bg-blue-500/80",
+  Examples: "bg-green-500/80",
+  Stories: "bg-[#EC4899]/80",
   Repetition: "bg-amber-400/80",
-  "Sponsor/Promotion": "bg-rose-500/80",
-  Filler: "bg-muted-foreground/40",
+  "Sponsor/Promotion": "bg-gray-300/80",
+  Filler: "bg-red-400/60",
 };
 function dnaColorClass(label: string): string {
   return DNA_COLOR_MAP[label] ?? "bg-secondary-foreground/40";
