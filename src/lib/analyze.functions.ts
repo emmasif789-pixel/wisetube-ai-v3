@@ -94,13 +94,13 @@ const reportSchema = z.object({
   category: z.string().default("Education"),
   language: z.string().default("English"),
   worthWatching: z.enum(["Yes", "Skim", "No"]),
-  overallScore: z.number().min(0).max(5),
+  overallScore: z.number().min(0).max(10),
   scoreExplanation: z.string(),
   scoreBreakdown: z
-    .array(z.object({ label: z.string(), score: z.number().min(0).max(5) }))
-    .min(3),
+    .array(z.object({ label: z.string(), score: z.number().min(0).max(10) }))
+    .length(7),
   executiveSummary: z.string(),
-  keyInsights: z.array(z.object({ title: z.string(), body: z.string().default("") })).min(1),
+  keyInsights: z.array(z.object({ title: z.string(), body: z.string().default("") })).min(5).max(7),
   chapters: z
     .array(z.object({ title: z.string(), start: z.number().min(0), summary: z.string().default("") }))
     .min(1),
@@ -112,6 +112,7 @@ const reportSchema = z.object({
         start: z.number().min(0),
         end: z.number().min(0),
         reason: z.string().default(""),
+        isBestMoment: z.boolean().default(false),
       }),
     )
     .min(1),
@@ -191,6 +192,32 @@ function sampleTranscript(full: string, maxChars: number): { text: string; sampl
   return { text: picked.join("\n...\n"), sampled: true };
 }
 
+// AI-estimated percentages rarely sum to exactly 100 due to independent
+// per-category estimation. This guarantees an exact 100% total by scaling
+// proportionally, then distributing any rounding remainder to the
+// categories with the largest fractional part — never left to chance.
+function normalizeVideoDna(
+  items: { label: string; percentage: number }[],
+): { label: string; percentage: number }[] {
+  const total = items.reduce((sum, i) => sum + i.percentage, 0);
+  if (total <= 0) return items.map((i) => ({ ...i, percentage: 0 }));
+
+  const scaled = items.map((i) => {
+    const raw = (i.percentage / total) * 100;
+    return { label: i.label, percentage: Math.floor(raw), remainder: raw - Math.floor(raw) };
+  });
+
+  const currentSum = scaled.reduce((sum, i) => sum + i.percentage, 0);
+  let remaining = 100 - currentSum;
+
+  const byRemainder = [...scaled].sort((a, b) => b.remainder - a.remainder);
+  for (let i = 0; i < remaining; i++) {
+    byRemainder[i % byRemainder.length].percentage += 1;
+  }
+
+  return scaled.map((s) => ({ label: s.label, percentage: s.percentage }));
+}
+
 async function generateReport(args: {
   url: string;
   videoId: string;
@@ -204,13 +231,13 @@ async function generateReport(args: {
   "category": string,            // e.g. "Education", "Productivity"
   "language": string,
   "worthWatching": "Yes"|"Skim"|"No",
-  "overallScore": number,        // 0-5 with one decimal
+  "overallScore": number,        // 0-10 with one decimal (e.g. 8.9)
   "scoreExplanation": string,    // 2-3 sentences
-  "scoreBreakdown": [ {"label": string, "score": number} ],  // 6 items: Content Depth, Clarity, Accuracy, Structure, Practical Value, Beginner Friendliness
+  "scoreBreakdown": [ {"label": string, "score": number} ], // EXACTLY 7 items with these exact labels, each scored 0-10: "Clarity", "Depth", "Structure", "Practical Value", "Examples", "Evidence & Accuracy", "Learning Efficiency"
   "executiveSummary": string,    // 3-5 sentences, mention strongest section with timestamps
-  "keyInsights": [ {"title": string, "body": string} ],       // 4 items
+  "keyInsights": [ {"title": string, "body": string} ], // 5-7 items. "title" MUST be a complete, self-contained one-line takeaway a reader can scan in 5 seconds (e.g. "Success comes from perseverance, not luck") — not a short label. "body" can stay brief, used for context elsewhere but not the main display.
   "chapters": [ {"title": string, "start": number, "summary": string} ], // 4-7 items
-  "skipMap": [ {"kind": "watch"|"optional"|"skip", "label": string, "start": number, "end": number, "reason": string} ], // 4-6 items covering the video
+  "skipMap": [ {"kind": "watch"|"optional"|"skip", "label": string, "start": number, "end": number, "reason": string, "isBestMoment": boolean} ], // 4-6 items covering the video. EXACTLY ONE segment across the whole array must have isBestMoment=true — pick the single segment with the highest concentration of valuable insight/information density (usually but not always a "watch" segment), not simply the longest or first one. All other segments must have isBestMoment=false.
   "videoDna": [ {"label": string, "percentage": number} ] // Break the ENTIRE video's runtime into these exact 6 categories, percentages must sum to 100: "Core Concepts", "Examples", "Stories", "Repetition", "Sponsor/Promotion", "Filler". Estimate honestly based on the transcript's actual content mix — do not default to even splits.
 }`;
 
@@ -270,6 +297,7 @@ Return the JSON report now.`;
     start: Math.min(Math.max(0, Math.floor(s.start)), args.durationSec),
     end: Math.min(Math.max(0, Math.floor(s.end)), args.durationSec),
     reason: s.reason,
+    isBestMoment: s.isBestMoment,
   }));
 
   const validSeconds = Array.from(
@@ -315,7 +343,7 @@ Return the JSON report now.`;
     })),
     chapters: sanitizedChapters,
     skipMap: sanitizedSkip,
-    videoDna: r.videoDna,
+    videoDna: normalizeVideoDna(r.videoDna),
   };
 }
 
