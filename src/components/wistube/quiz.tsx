@@ -16,6 +16,7 @@ export function Quiz({ report }: { report: LearningReport }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [displayScore, setDisplayScore] = useState(0);
 
   const start = async () => {
     if (loading) return;
@@ -68,6 +69,7 @@ export function Quiz({ report }: { report: LearningReport }) {
     setSelected(null);
     setIndex(0);
     setScore(0);
+    setDisplayScore(0);
   };
 
   // Once an answer is picked, pressing Enter advances to the next question —
@@ -84,6 +86,22 @@ export function Quiz({ report }: { report: LearningReport }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [questions, done, selected, index]);
+
+  // Animate the final score counting up from 0, once the results screen appears.
+  useEffect(() => {
+    if (!done) return;
+    setDisplayScore(0);
+    const duration = 600;
+    const steps = Math.max(1, score);
+    const stepTime = duration / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += 1;
+      setDisplayScore(current);
+      if (current >= score) clearInterval(timer);
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [done, score]);
 
   if (!questions) {
     return (
@@ -121,6 +139,9 @@ export function Quiz({ report }: { report: LearningReport }) {
 
   if (done) {
     const outOf5 = (score / questions.length) * 5;
+    const pct = Math.round((score / questions.length) * 100);
+    const remark =
+      pct >= 80 ? "Excellent work!" : pct >= 50 ? "Nice effort!" : "Worth a rewatch.";
     return (
       <motion.div
         key="done"
@@ -132,10 +153,24 @@ export function Quiz({ report }: { report: LearningReport }) {
         <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Your Score
         </p>
-        <div className="mt-2 text-4xl font-semibold tracking-tight">
-          {score} <span className="text-lg text-muted-foreground">/ {questions.length}</span>
+        <motion.div
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          className="mt-2 text-4xl font-semibold tracking-tight"
+        >
+          {displayScore} <span className="text-lg text-muted-foreground">/ {questions.length}</span>
+        </motion.div>
+        <p className="mt-1 text-xs text-muted-foreground">{remark}</p>
+        <div className="mt-3 text-2xl leading-none">{renderBooks(outOf5)}</div>
+        <div className="mx-auto mt-4 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-secondary/60">
+          <motion.div
+            className="h-full rounded-full bg-primary/80"
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          />
         </div>
-        <div className="mt-2 text-2xl leading-none">{renderBooks(outOf5)}</div>
         <Button
           onClick={reset}
           variant="outline"
@@ -148,20 +183,23 @@ export function Quiz({ report }: { report: LearningReport }) {
   }
 
   const q = questions[index];
-  const progress = (index / questions.length) * 100;
+  const progress = ((index + (selected !== null ? 1 : 0)) / questions.length) * 100;
   return (
     <div className="p-6">
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
           Question {index + 1} of {questions.length}
         </span>
-        <span>Score {score}</span>
+        <span className="flex items-center gap-1">
+          <Sparkles className="h-3 w-3 text-primary" />
+          Score {score}
+        </span>
       </div>
-      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-secondary/60">
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary/60">
         <motion.div
-          className="h-full bg-primary/80"
+          className="h-full rounded-full bg-primary/80"
           animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         />
       </div>
       <AnimatePresence mode="wait">
@@ -182,13 +220,18 @@ export function Quiz({ report }: { report: LearningReport }) {
               const isPicked = selected === i;
               const revealed = selected !== null;
               return (
-                <button
+                <motion.button
                   key={i}
                   type="button"
                   onClick={() => pick(i)}
                   disabled={revealed}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: i * 0.07, ease: "easeOut" }}
+                  whileHover={!revealed ? { scale: 1.01 } : undefined}
+                  whileTap={!revealed ? { scale: 0.99 } : undefined}
                   className={cn(
-                    "flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left text-sm transition-all",
+                    "flex items-center justify-between gap-3 rounded-xl border p-3.5 text-left text-sm transition-colors",
                     !revealed &&
                       "border-border/60 bg-secondary/30 hover:border-primary/40 hover:bg-secondary/50",
                     revealed &&
@@ -205,13 +248,27 @@ export function Quiz({ report }: { report: LearningReport }) {
                   )}
                 >
                   <span>{opt}</span>
-                  {revealed && isCorrect && (
-                    <Check className="h-4 w-4 shrink-0 text-emerald-500" />
-                  )}
-                  {revealed && !isCorrect && isPicked && (
-                    <X className="h-4 w-4 shrink-0 text-red-500" />
-                  )}
-                </button>
+                  <AnimatePresence>
+                    {revealed && isCorrect && (
+                      <motion.span
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <Check className="h-4 w-4 shrink-0 text-emerald-500" />
+                      </motion.span>
+                    )}
+                    {revealed && !isCorrect && isPicked && (
+                      <motion.span
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <X className="h-4 w-4 shrink-0 text-red-500" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
               );
             })}
           </div>
