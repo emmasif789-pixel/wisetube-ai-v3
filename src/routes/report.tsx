@@ -254,7 +254,7 @@ function Report({ report }: { report: LearningReport }) {
   const playerRef = useRef<YouTubePlayerHandle>(null);
   const [activeChapter, setActiveChapter] = useState<string | null>(null);
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
-  const [qualityOpen, setQualityOpen] = useState(false);
+  const [qualityOpen, setQualityOpen] = useState(true);
   const timelineRef = useRef<HTMLOListElement>(null);
 
   const jumpTo = (seconds: number) => {
