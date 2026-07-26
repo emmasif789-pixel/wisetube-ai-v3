@@ -8,7 +8,7 @@ import { analyzeVideo } from "@/lib/analyze.functions";
 import type { LearningReport } from "@/lib/report-data";
 import { cn } from "@/lib/utils";
 
-const YOUTUBE_REGEX =
+export const YOUTUBE_REGEX =
   /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/|embed\/|v\/)[\w-]{6,}|youtu\.be\/[\w-]{6,})(\S*)?$/i;
 
 export function Compare({ report }: { report: LearningReport }) {
@@ -79,7 +79,7 @@ export function Compare({ report }: { report: LearningReport }) {
   }
 
   const scoreDiff = Math.abs(report.overallScore - other.overallScore);
-  const isTie = scoreDiff <= 0.1;
+  const isTie = scoreDiff <= 0.2;
   const leftWins = !isTie && report.overallScore > other.overallScore;
   const rightWins = !isTie && other.overallScore > report.overallScore;
 
@@ -118,7 +118,7 @@ export function Compare({ report }: { report: LearningReport }) {
   );
 }
 
-function CompareCard({
+export function CompareCard({
   report,
   winner,
 }: {
@@ -129,6 +129,7 @@ function CompareCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
       className={cn(
         "relative flex h-full flex-col rounded-2xl border p-5 transition-all",
@@ -154,7 +155,7 @@ function CompareCard({
           <div className="text-3xl font-semibold tracking-tight">
             {report.overallScore.toFixed(1)}
           </div>
-          <div className="pb-1 text-xs text-muted-foreground">/ 5</div>
+          <div className="pb-1 text-xs text-muted-foreground">/ 10</div>
         </div>
         <div className="mt-1 text-lg leading-none">
           {renderBooks(report.overallScore)}
@@ -180,7 +181,7 @@ function CompareCard({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+export function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border/60 bg-background/40 py-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -191,7 +192,8 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function renderBooks(score: number): string {
-  const full = Math.round(score);
+export function renderBooks(score: number): string {
+  // score is 0-10; convert proportionally to a 5-book visual scale
+  const full = Math.round((score / 10) * 5);
   return "📚".repeat(full) + "☆".repeat(Math.max(0, 5 - full));
 }
