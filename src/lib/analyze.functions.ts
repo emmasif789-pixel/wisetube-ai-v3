@@ -261,6 +261,7 @@ Return the JSON report now.`;
       { role: "user", content: user },
     ],
     maxTokens: MAX_COMPLETION_TOKENS,
+    temperature: 0.2,
   });
 
   let parsed: unknown;
