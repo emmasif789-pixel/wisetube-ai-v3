@@ -6,8 +6,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  CheckCircle2,
+  ChevronDown,
   Clock,
   Dna,
+  Gauge,
   GitCompare,
   HelpCircle,
   ListTree,
@@ -235,18 +238,23 @@ const VERDICT_META: Record<
   No: { label: "Skip it", dot: "bg-red-500" },
 };
 
-function dnaSummaryLine(dna: LearningReport["videoDna"]): string {
-  return [...dna]
-    .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 3)
-    .map((c) => `${c.percentage}% ${c.label}`)
-    .join(" • ");
+const DNA_COLOR_MAP: Record<string, string> = {
+  "Core Concepts": "bg-primary/80",
+  Examples: "bg-emerald-500/80",
+  Stories: "bg-blue-500/80",
+  Repetition: "bg-amber-400/80",
+  "Sponsor/Promotion": "bg-rose-500/80",
+  Filler: "bg-muted-foreground/40",
+};
+function dnaColorClass(label: string): string {
+  return DNA_COLOR_MAP[label] ?? "bg-secondary-foreground/40";
 }
 
 function Report({ report }: { report: LearningReport }) {
   const playerRef = useRef<YouTubePlayerHandle>(null);
   const [activeChapter, setActiveChapter] = useState<string | null>(null);
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
+  const [qualityOpen, setQualityOpen] = useState(false);
   const timelineRef = useRef<HTMLOListElement>(null);
 
   const jumpTo = (seconds: number) => {
@@ -304,36 +312,130 @@ function Report({ report }: { report: LearningReport }) {
                 {report.title}
               </h1>
 
-              <div className="mt-5 space-y-3">
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="font-medium text-foreground">
-                    {minutesSaved > 0
-                      ? `Save ${minutesSaved} min (${totalMin} → ${minutesToMaster})`
-                      : "Every second pulls its weight"}
-                  </span>
-                  {minutesSaved > 0 && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              {/* Time Saved — the biggest text after the title, first thing the eye sees */}
+              <div className="mt-5">
+                {minutesSaved > 0 ? (
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <Clock className="h-6 w-6 shrink-0 self-center text-primary" />
+                    <span className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                      Save {minutesSaved} min
+                    </span>
+                    <span className="text-base font-medium text-muted-foreground">
+                      ({totalMin} → {minutesToMaster})
+                    </span>
+                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
                       {savedPct}% faster
                     </span>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-6 w-6 shrink-0 text-primary" />
+                    <span className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                      100% Worth Your Time
+                    </span>
+                  </div>
+                )}
+              </div>
 
+              <div className="mt-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm">
                   <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", verdict.dot)} />
                   <span className="font-medium text-foreground">Verdict:</span>
                   <span className="text-muted-foreground">{verdict.label}</span>
                 </div>
 
-                <div className="flex items-start gap-2 text-sm">
-                  <Dna className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span className="text-muted-foreground">
-                    {dnaSummaryLine(report.videoDna)}
-                  </span>
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-sm">
+                    <Dna className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="font-medium text-foreground">Video DNA</span>
+                  </div>
+                  <div className="flex h-2 w-full overflow-hidden rounded-full bg-secondary/60">
+                    {report.videoDna.map((c, i) => (
+                      <motion.div
+                        key={c.label}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${c.percentage}%` }}
+                        transition={{ duration: 0.55, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
+                        className={dnaColorClass(c.label)}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                    {report.videoDna.map((c, i) => (
+                      <motion.span
+                        key={c.label}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.4, delay: i * 0.15 + 0.25 }}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                      >
+                        <span className={cn("h-2 w-2 shrink-0 rounded-full", dnaColorClass(c.label))} />
+                        {c.percentage}% {c.label}
+                      </motion.span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              {/* Learning Quality Assessment — collapsed by default, visual only */}
+              <div className="mt-4 rounded-xl border border-border/60 bg-secondary/20">
+                <button
+                  type="button"
+                  onClick={() => setQualityOpen((o) => !o)}
+                  className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <Gauge className="h-4 w-4 text-primary" />
+                    Learning Quality Assessment
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300",
+                      qualityOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+                <AnimatePresence initial={false}>
+                  {qualityOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-4 px-4 pb-4 pt-1">
+                        <div>
+                          <span className="text-2xl font-semibold tracking-tight text-foreground">
+                            {report.overallScore.toFixed(1)}
+                          </span>
+                          <span className="text-sm text-muted-foreground"> / 10 overall</span>
+                        </div>
+                        <ul className="space-y-2.5">
+                          {report.scoreBreakdown.map((b) => (
+                            <li key={b.label} className="flex items-center gap-3">
+                              <span className="w-40 shrink-0 text-xs text-muted-foreground">
+                                {b.label}
+                              </span>
+                              <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/60">
+                                <div
+                                  className="absolute inset-y-0 left-0 rounded-full bg-primary/80"
+                                  style={{ width: `${(b.score / 10) * 100}%` }}
+                                />
+                              </div>
+                              <span className="w-8 text-right text-xs tabular-nums text-foreground">
+                                {b.score.toFixed(1)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <Badge>{report.category}</Badge>
                 <Badge>{totalMin} min</Badge>
                 <Badge>{report.language}</Badge>
@@ -345,7 +447,22 @@ function Report({ report }: { report: LearningReport }) {
           </div>
         </ElevatedCard>
 
-        {/* Learning Summary */}
+        {/* Key Insights — scan it in 30 seconds */}
+        <SectionTitle icon={CheckCircle2}>Key Insights</SectionTitle>
+        <ElevatedCard>
+          <ul className="grid grid-cols-1 gap-x-8 gap-y-3 p-8 sm:grid-cols-2">
+            {report.keyInsights.map((insight, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span className="text-sm leading-relaxed text-foreground/90">
+                  {insight.title}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </ElevatedCard>
+
+        {/* Learning Summary — learn it in 3-5 minutes */}
         <SectionTitle icon={Sparkles}>Learning Summary</SectionTitle>
         <ElevatedCard>
           <div className="grid gap-6 p-8 sm:grid-cols-3">
@@ -368,65 +485,111 @@ function Report({ report }: { report: LearningReport }) {
         {/* Skip Map */}
         <SectionTitle icon={MapIcon}>Skip Map</SectionTitle>
         <ElevatedCard interactive>
-          <div className="space-y-6 p-8">
-            <div className="relative flex h-3 w-full overflow-hidden rounded-full bg-secondary/60">
-              {report.skipMap.map((s) => {
-                const width = ((s.end - s.start) / report.durationSec) * 100;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => handleSegmentClick(s.id, s.start)}
-                    aria-label={`${s.label} ${formatTimestamp(s.start)} to ${formatTimestamp(s.end)}`}
-                    className={cn(
-                      "h-full transition-opacity hover:opacity-100",
-                      activeSegment && activeSegment !== s.id
-                        ? "opacity-60"
-                        : "opacity-100",
-                      segmentBgClass(s.kind),
-                    )}
-                    style={{ width: `${width}%` }}
-                  />
-                );
-              })}
+          <div className="p-8">
+            {/* Stats row */}
+            {(() => {
+              const watchCount = report.skipMap.filter((s) => s.kind === "watch").length;
+              const optionalCount = report.skipMap.filter((s) => s.kind === "optional").length;
+              const skipCount = report.skipMap.filter((s) => s.kind === "skip").length;
+              return (
+                <p className="mb-4 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{report.skipMap.length} Sections</span>
+                  {" • "}
+                  <span className="text-emerald-500">{watchCount} Watch</span>
+                  {" • "}
+                  <span className="text-amber-500">{optionalCount} Optional</span>
+                  {" • "}
+                  <span className="text-red-400">{skipCount} Skip</span>
+                  {" • "}
+                  <span className="font-medium text-foreground">{minutesSaved} min saved</span>
+                </p>
+              );
+            })()}
+
+            {/* Sticky bar — stays visible while the section cards below scroll */}
+            <div className="sticky top-24 z-10 space-y-2 rounded-xl bg-card/95 py-2 backdrop-blur-xl">
+              <div className="relative flex h-3 w-full overflow-hidden rounded-full bg-secondary/60">
+                {report.skipMap.map((s, i) => {
+                  const width = ((s.end - s.start) / report.durationSec) * 100;
+                  return (
+                    <motion.button
+                      key={s.id}
+                      type="button"
+                      onClick={() => handleSegmentClick(s.id, s.start)}
+                      aria-label={`${s.label} ${formatTimestamp(s.start)} to ${formatTimestamp(s.end)}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${width}%` }}
+                      transition={{ duration: 0.6, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
+                      className={cn(
+                        "relative h-full transition-opacity hover:opacity-100",
+                        activeSegment && activeSegment !== s.id
+                          ? "opacity-60"
+                          : "opacity-100",
+                        segmentBgClass(s.kind),
+                      )}
+                    >
+                      {s.isBestMoment && (
+                        <span
+                          className="absolute inset-0 flex items-center justify-center"
+                          aria-hidden
+                        >
+                          <span className="best-moment-pulse h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_6px_2px_rgba(251,191,36,0.6)]" />
+                        </span>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+              <style>{`
+                @keyframes best-moment-pulse {
+                  0%, 100% { opacity: 0.6; transform: scale(1); }
+                  50% { opacity: 1; transform: scale(1.4); }
+                }
+                .best-moment-pulse { animation: best-moment-pulse 2.2s ease-in-out infinite; }
+              `}</style>
             </div>
 
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {report.skipMap.map((s) => {
+            <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {report.skipMap.map((s, i) => {
                 const isActive = activeSegment === s.id;
                 return (
-                  <li key={s.id}>
+                  <motion.li
+                    key={s.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  >
                     <button
                       type="button"
                       onClick={() => handleSegmentClick(s.id, s.start)}
                       className={cn(
-                        "flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors",
-                        isActive
-                          ? "border-primary/60 bg-primary/10"
-                          : "border-border/60 bg-secondary/30 hover:bg-secondary/50",
+                        "flex w-full items-start gap-3 rounded-lg border-l-4 bg-secondary/30 p-4 text-left transition-colors hover:bg-secondary/50",
+                        segmentBorderClass(s.kind),
+                        isActive && "bg-primary/10",
+                        s.isBestMoment && "ring-1 ring-amber-400/50",
                       )}
                     >
-                      <span
-                        className={cn(
-                          "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
-                          segmentDotClass(s.kind),
-                        )}
-                      />
                       <div className="flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-medium text-foreground">
                             {segmentEmoji(s.kind)} {s.label}
+                            {s.isBestMoment && (
+                              <span className="ml-2 text-xs font-medium text-amber-500">
+                                ⭐ Best Moment
+                              </span>
+                            )}
                           </p>
                           <span className="text-xs tabular-nums text-muted-foreground">
                             {formatTimestamp(s.start)} – {formatTimestamp(s.end)}
                           </span>
                         </div>
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                          {s.isBestMoment ? "Highest learning value — " : ""}
                           {s.reason}
                         </p>
                       </div>
                     </button>
-                  </li>
+                  </motion.li>
                 );
               })}
             </ul>
@@ -567,6 +730,11 @@ function segmentDotClass(kind: SkipSegmentKind): string {
   if (kind === "watch") return "bg-emerald-500";
   if (kind === "optional") return "bg-amber-400";
   return "bg-red-500";
+}
+function segmentBorderClass(kind: SkipSegmentKind): string {
+  if (kind === "watch") return "border-l-emerald-500";
+  if (kind === "optional") return "border-l-amber-400";
+  return "border-l-red-400";
 }
 function segmentEmoji(kind: SkipSegmentKind): string {
   if (kind === "watch") return "🟢";
