@@ -9,6 +9,7 @@ import {
   Scale,
   GitCompareArrows,
   HelpCircle,
+  Dna,
   type LucideIcon,
 } from "lucide-react";
 
@@ -22,47 +23,52 @@ const features: Feature[] = [
   {
     icon: FileText,
     title: "Learning Report",
-    description: "A clear verdict on whether a video is worth watching.",
+    description: "A complete AI analysis that reveals what the video is truly worth.",
   },
   {
     icon: Clock,
     title: "Time Saved",
-    description: "See exactly how many minutes you'll reclaim.",
+    description: "Know in seconds whether the video deserves your time.",
   },
   {
     icon: Gauge,
-    title: "Learning Score",
-    description: "Signal-over-noise, quantified from 0 to 100.",
+    title: "Learning Quality Assessment",
+    description: "Measure clarity, depth, structure, evidence, and real learning value.",
   },
   {
     icon: ListTree,
     title: "Learning Timeline",
-    description: "A structured outline of what you'll actually learn.",
+    description: "Navigate every key idea through a structured learning journey.",
   },
   {
     icon: Map,
     title: "Skip Map",
-    description: "Know which sections to skip and which to rewatch.",
+    description: "Instantly identify what to watch, skim, or skip—with the best moment highlighted.",
   },
   {
     icon: Scale,
     title: "AI Debate",
-    description: "See both sides of an argument before you take one.",
+    description: "Challenge every perspective with balanced arguments before forming your own.",
   },
   {
     icon: MessagesSquare,
     title: "Ask AI",
-    description: "Ask any question about the video and get answers.",
+    description: "Turn every video into an interactive conversation with your personal AI tutor.",
   },
   {
     icon: GitCompareArrows,
-    title: "Compare Videos",
-    description: "Put two videos side by side and see which wins.",
+    title: "Compare",
+    description: "Put two videos head-to-head and discover the smarter learning investment.",
   },
   {
     icon: HelpCircle,
     title: "AI Quiz",
-    description: "Test what actually stuck, in under two minutes.",
+    description: "Reinforce your understanding with an AI-generated knowledge check in minutes.",
+  },
+  {
+    icon: Dna,
+    title: "Video DNA",
+    description: "See the true composition of every video—from core ideas to filler.",
   },
 ];
 
