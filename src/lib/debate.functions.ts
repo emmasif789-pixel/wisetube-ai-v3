@@ -2,19 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { callGroq } from "./groq-client";
 
-export type DebateResult =
-  | {
-      mode: "debate";
-      mainViewpoint: string[];
-      counterargument: string[];
-      balancedConclusion: string;
-    }
-  | {
-      mode: "alternatives";
-      primaryApproach: string[];
-      alternativeApproaches: string[];
-      recommendation: string;
-    };
+export type DebateResult = {
+  mode: "debate";
+  mainViewpoint: string[];
+  counterargument: string[];
+  balancedConclusion: string;
+};
 
 function extractJson(raw: string): string {
   let s = raw.trim();
@@ -41,42 +34,9 @@ const debateSchema = z.object({
   balancedConclusion: z.string(),
 });
 
-const alternativesSchema = z.object({
-  primaryApproach: z.array(z.string()).min(2).max(4),
-  alternativeApproaches: z.array(z.string()).min(2).max(4),
-  recommendation: z.string(),
-});
-
-// Categories where opposing viewpoints make sense. Anything else (tutorials,
-// how-tos, factual/technical walkthroughs) gets "Alternative Approaches"
-// instead — comparing methods rather than forcing a debate that wouldn't
-// make sense for content like "how to center a div in CSS".
-// This branch is decided from the `category` field the main report already
-// generates — no extra Groq call needed just to classify the video.
-const DEBATE_CATEGORIES = [
-  "self-improvement",
-  "personal growth",
-  "business",
-  "politics",
-  "history",
-  "philosophy",
-  "current affairs",
-  "opinion",
-  "society",
-  "psychology",
-  "productivity",
-];
-
-function shouldUseDebateMode(category: string): boolean {
-  const c = category.toLowerCase();
-  return DEBATE_CATEGORIES.some((k) => c.includes(k));
-}
-
 export const generateDebate = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ context: contextSchema }).parse(i))
   .handler(async ({ data }): Promise<DebateResult> => {
-    const useDebate = shouldUseDebateMode(data.context.category);
-
     const ctx = `Video: ${data.context.title}
 Category: ${data.context.category}
 Summary:
@@ -84,14 +44,17 @@ ${data.context.executiveSummary}
 Insights:
 ${data.context.keyInsights.map((k) => `- ${k.title}: ${k.body}`).join("\n")}`;
 
-    const debateSystem = `You are an educational critical-thinking assistant. Based on the video below, produce a balanced exploration of perspectives. Rules: mainViewpoint = 2-4 short bullet points summarizing the video's primary argument. counterargument = 2-4 short bullet points giving a realistic, thoughtful, educational opposing perspective — not a strawman. balancedConclusion = 2-3 neutral sentences comparing both views and when each may be valid. Return JSON only in this shape: {"mainViewpoint":[string,...],"counterargument":[string,...],"balancedConclusion":string}`;
-
-    const alternativesSystem = `You are an educational assistant helping viewers compare methods. Based on the tutorial/factual video below, produce a comparison of approaches. Rules: primaryApproach = 2-4 short bullet points summarizing the method/approach shown in the video. alternativeApproaches = 2-4 short bullet points describing other valid methods to achieve the same goal, and briefly why someone might choose them instead. recommendation = 2-3 neutral sentences on when to use the video's approach vs. the alternatives. Return JSON only in this shape: {"primaryApproach":[string,...],"alternativeApproaches":[string,...],"recommendation":string}`;
+    // Applied to EVERY video, including tutorials/factual content. For
+    // opinion-based videos, counterargument is a genuine opposing view. For
+    // instructional/factual videos, counterargument is framed as a real
+    // alternative method, a common misconception, or a genuine limitation
+    // of the approach shown — never an invented or strawman disagreement.
+    const debateSystem = `You are an educational critical-thinking assistant. Based on the video below, produce a balanced exploration of perspectives. Rules: mainViewpoint = 2-4 short bullet points summarizing the video's primary argument or approach. counterargument = 2-4 short bullet points giving a realistic, thoughtful, educational opposing perspective — not a strawman. If the video is opinion-based, this is a genuine opposing viewpoint. If the video is instructional or factual (e.g. a tutorial), frame this as a genuinely different valid method, an important limitation, or a common misconception about the approach shown — still a real, substantive perspective, never invented just to fill the section. balancedConclusion = 2-3 neutral sentences comparing both views and when each may be valid. Return JSON only in this shape: {"mainViewpoint":[string,...],"counterargument":[string,...],"balancedConclusion":string}`;
 
     const content = await callGroq({
       models: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
       messages: [
-        { role: "system", content: useDebate ? debateSystem : alternativesSystem },
+        { role: "system", content: debateSystem },
         { role: "user", content: ctx },
       ],
       maxTokens: 700,
@@ -105,11 +68,6 @@ ${data.context.keyInsights.map((k) => `- ${k.title}: ${k.body}`).join("\n")}`;
       throw new Error("AI returned malformed output.");
     }
 
-    if (useDebate) {
-      const r = debateSchema.parse(parsed);
-      return { mode: "debate", ...r };
-    } else {
-      const r = alternativesSchema.parse(parsed);
-      return { mode: "alternatives", ...r };
-    }
+    const r = debateSchema.parse(parsed);
+    return { mode: "debate", ...r };
   });
