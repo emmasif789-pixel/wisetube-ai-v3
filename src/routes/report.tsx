@@ -649,9 +649,14 @@ function Report({ report }: { report: LearningReport }) {
           <Debate report={report} />
         </ElevatedCard>
 
-        {/* Compare Videos */}
-        <SectionTitle icon={GitCompare}>Compare Videos</SectionTitle>
-        <ElevatedCard interactive>
+        {/* Compare Videos — badge + glow border so it doesn't get scrolled past */}
+        <SectionTitle icon={GitCompare}>
+          Compare Videos
+          <span className="ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary">
+            🔥 Try it
+          </span>
+        </SectionTitle>
+        <ElevatedCard interactive glow>
           <Compare report={report} />
         </ElevatedCard>
 
@@ -750,18 +755,23 @@ function segmentEmoji(kind: SkipSegmentKind): string {
 function ElevatedCard({
   children,
   interactive = false,
+  glow = false,
 }: {
   children: React.ReactNode;
   interactive?: boolean;
+  glow?: boolean;
 }) {
   return (
     <div
       className={cn(
         "mt-0 overflow-hidden rounded-[20px] bg-card/60 backdrop-blur-xl",
         interactive && "border border-border/50",
+        glow && "border border-primary/40",
       )}
       style={{
-        boxShadow: "0 1px 2px rgba(0,0,0,0.06), 0 8px 28px rgba(0,0,0,0.10)",
+        boxShadow: glow
+          ? "var(--shadow-glow)"
+          : "0 1px 2px rgba(0,0,0,0.06), 0 8px 28px rgba(0,0,0,0.10)",
       }}
     >
       {children}
