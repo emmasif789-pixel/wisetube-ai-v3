@@ -18,6 +18,7 @@ import {
   MessagesSquare,
   Play,
   Sparkles,
+  Youtube,
 } from "lucide-react";
 import { z } from "zod";
 import { Navbar } from "@/components/wistube/navbar";
@@ -141,7 +142,22 @@ function ReportPage() {
   );
 }
 
+const NO_CAPTIONS_MESSAGE = "This video is private, unavailable, or has no transcript.";
+
+const EXAMPLE_VIDEOS = [
+  {
+    label: "TED Talk: Do Schools Kill Creativity?",
+    url: "https://www.youtube.com/watch?v=iG9CE55wbtY",
+  },
+  {
+    label: "Steve Jobs: Stanford Commencement Speech",
+    url: "https://www.youtube.com/watch?v=UF8uR6Z6KLc",
+  },
+];
+
 function ErrorScreen({ message }: { message: string }) {
+  const isNoCaptions = message === NO_CAPTIONS_MESSAGE;
+
   return (
     <section className="relative pt-40 pb-24 sm:pt-48">
       <div
@@ -150,17 +166,54 @@ function ErrorScreen({ message }: { message: string }) {
         aria-hidden
       />
       <div className="mx-auto max-w-xl px-6 text-center">
-        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-          We couldn't analyze this video
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">{message}</p>
-        <div className="mt-6">
-          <Button asChild size="lg" className="h-11 rounded-xl px-5">
-            <a href="/">
-              <ArrowLeft className="mr-1 h-4 w-4" /> Try another video
-            </a>
-          </Button>
-        </div>
+        {isNoCaptions ? (
+          <>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border/60 bg-secondary/40">
+              <Youtube className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h1 className="mt-5 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+              This video doesn't have captions
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              WisTube currently analyzes videos that include captions or transcripts.
+            </p>
+            <p className="mt-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Try another video, or use one of these examples
+            </p>
+            <div className="mt-4 space-y-2">
+              {EXAMPLE_VIDEOS.map((v) => (
+                <a
+                  key={v.url}
+                  href={`/report?url=${encodeURIComponent(v.url)}`}
+                  className="block rounded-xl border border-border/60 bg-secondary/30 px-4 py-3 text-left text-sm text-foreground transition-colors hover:border-primary/40 hover:bg-secondary/50"
+                >
+                  {v.label}
+                </a>
+              ))}
+            </div>
+            <div className="mt-6">
+              <Button asChild variant="outline" size="lg" className="h-11 rounded-xl px-5">
+                <a href="/">
+                  <ArrowLeft className="mr-1 h-4 w-4" /> Try another video
+                </a>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+              We couldn't analyze this video
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">{message}</p>
+            <div className="mt-6">
+              <Button asChild size="lg" className="h-11 rounded-xl px-5">
+                <a href="/">
+                  <ArrowLeft className="mr-1 h-4 w-4" /> Try another video
+                </a>
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
@@ -303,7 +356,7 @@ function Report({ report }: { report: LearningReport }) {
 
         {/* Hero — title, compact Time Saved / Verdict / Video DNA at a glance */}
         <ElevatedCard interactive>
-          <div className="flex flex-col-reverse gap-6 p-8 lg:flex-row lg:items-center">
+          <div className="flex flex-col-reverse gap-6 p-8 lg:flex-row lg:items-start">
             <div className="flex-1">
               <p className="text-xs font-medium uppercase tracking-wider text-primary">
                 Learning Report
