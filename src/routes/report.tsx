@@ -37,7 +37,6 @@ import { AskAi } from "@/components/wistube/ask-ai";
 import { Quiz } from "@/components/wistube/quiz";
 import { Compare } from "@/components/wistube/compare";
 import { Debate } from "@/components/wistube/debate";
-import { CircularRing } from "@/components/wistube/circular-ring";
 import { useListeningMode } from "@/hooks/use-listening-mode";
 import { ListenTriggerButton, ListenPanel } from "@/components/wistube/listening-mode";
 import { cn } from "@/lib/utils";
@@ -494,17 +493,20 @@ function Report({
                           </span>
                           <span className="text-sm text-muted-foreground"> / 10 overall</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-x-2 gap-y-4 sm:grid-cols-4">
-                          {report.scoreBreakdown.map((b, i) => (
-                            <CircularRing
-                              key={b.label}
-                              value={(b.score / 10) * 100}
-                              size={52}
-                              strokeWidth={4.5}
-                              centerText={b.score.toFixed(1)}
-                              label={b.label}
-                              delay={i * 0.06}
-                            />
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {report.scoreBreakdown.map((b) => (
+                            <div key={b.label}>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-medium text-foreground">{b.label}</span>
+                                <span className="text-muted-foreground">{b.score.toFixed(1)} / 10</span>
+                              </div>
+                              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary/60">
+                                <div
+                                  className="h-full rounded-full bg-primary/80"
+                                  style={{ width: `${(b.score / 10) * 100}%` }}
+                                />
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
