@@ -37,6 +37,10 @@ import { AskAi } from "@/components/wistube/ask-ai";
 import { Quiz } from "@/components/wistube/quiz";
 import { Compare } from "@/components/wistube/compare";
 import { Debate } from "@/components/wistube/debate";
+import { CircularRing } from "@/components/wistube/circular-ring";
+import { ReportCard } from "@/components/wistube/report-card";
+import { useListeningMode } from "@/hooks/use-listening-mode";
+import { ListenTriggerButton, ListenPanel } from "@/components/wistube/listening-mode";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ url: z.string().optional() });
@@ -57,9 +61,15 @@ function ReportPage() {
   const { url } = Route.useSearch();
   const videoId = useMemo(() => (url ? getYouTubeVideoId(url) : null), [url]);
   const analyze = useServerFn(analyzeVideo);
+  const [generationTimeSec, setGenerationTimeSec] = useState<number | null>(null);
   const query = useQuery<LearningReport, Error>({
     queryKey: ["report", url],
-    queryFn: () => analyze({ data: { url: url! } }),
+    queryFn: async () => {
+      const t0 = performance.now();
+      const result = await analyze({ data: { url: url! } });
+      setGenerationTimeSec((performance.now() - t0) / 1000);
+      return result;
+    },
     enabled: Boolean(url && videoId),
     retry: false,
     staleTime: 5 * 60 * 1000,
@@ -133,7 +143,7 @@ function ReportPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <Report report={query.data} />
+            <Report report={query.data} generationTimeSec={generationTimeSec} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -303,11 +313,32 @@ function dnaColorClass(label: string): string {
   return DNA_COLOR_MAP[label] ?? "bg-secondary-foreground/40";
 }
 
-function Report({ report }: { report: LearningReport }) {
+function Report({
+  report,
+  generationTimeSec,
+}: {
+  report: LearningReport;
+  generationTimeSec: number | null;
+}) {
   const playerRef = useRef<YouTubePlayerHandle>(null);
   const [activeChapter, setActiveChapter] = useState<string | null>(null);
   const [activeSegment, setActiveSegment] = useState<string | null>(null);
   const [qualityOpen, setQualityOpen] = useState(true);
+
+  const listenSections = [
+    { label: "The Idea", text: report.executiveSummary },
+    { label: "Why It Matters", text: report.scoreExplanation },
+    {
+      label: "Worth Your Time?",
+      text:
+        report.worthWatching === "Yes"
+          ? "Yes — this one earns its runtime."
+          : report.worthWatching === "Skim"
+            ? "Worth a skim — watch the highlighted sections, skip the rest."
+            : "No — the Skip Map below shows why.",
+    },
+  ];
+  const listenState = useListeningMode(listenSections);
   const timelineRef = useRef<HTMLOListElement>(null);
 
   const jumpTo = (seconds: number) => {
@@ -464,24 +495,19 @@ function Report({ report }: { report: LearningReport }) {
                           </span>
                           <span className="text-sm text-muted-foreground"> / 10 overall</span>
                         </div>
-                        <ul className="space-y-2.5">
-                          {report.scoreBreakdown.map((b) => (
-                            <li key={b.label} className="flex items-center gap-3">
-                              <span className="w-40 shrink-0 text-xs text-muted-foreground">
-                                {b.label}
-                              </span>
-                              <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-secondary/60">
-                                <div
-                                  className="absolute inset-y-0 left-0 rounded-full bg-primary/80"
-                                  style={{ width: `${(b.score / 10) * 100}%` }}
-                                />
-                              </div>
-                              <span className="w-8 text-right text-xs tabular-nums text-foreground">
-                                {b.score.toFixed(1)}
-                              </span>
-                            </li>
+                        <div className="grid grid-cols-3 gap-x-2 gap-y-4 sm:grid-cols-4">
+                          {report.scoreBreakdown.map((b, i) => (
+                            <CircularRing
+                              key={b.label}
+                              value={(b.score / 10) * 100}
+                              size={52}
+                              strokeWidth={4.5}
+                              centerText={b.score.toFixed(1)}
+                              label={b.label}
+                              delay={i * 0.06}
+                            />
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -500,6 +526,11 @@ function Report({ report }: { report: LearningReport }) {
           </div>
         </ElevatedCard>
 
+        {/* Report Card — Spotify-Wrapped-style shareable snapshot */}
+        <div className="mt-8">
+          <ReportCard report={report} generationTimeSec={generationTimeSec} />
+        </div>
+
         {/* Key Insights — scan it in 30 seconds */}
         <SectionTitle icon={CheckCircle2}>Key Insights</SectionTitle>
         <ElevatedCard>
@@ -515,22 +546,41 @@ function Report({ report }: { report: LearningReport }) {
           </ul>
         </ElevatedCard>
 
-        {/* Learning Summary — learn it in 3-5 minutes */}
-        <SectionTitle icon={Sparkles}>Learning Summary</SectionTitle>
+        {/* Executive Summary — learn it in 3-5 minutes, with AI Listening Mode */}
+        <div className="mt-12 mb-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              Executive Summary
+            </h2>
+          </div>
+          <ListenTriggerButton state={listenState} />
+        </div>
         <ElevatedCard>
-          <div className="grid gap-6 p-8 sm:grid-cols-3">
-            <SummaryBlock label="The Idea" text={report.executiveSummary} onJump={jumpTo} />
-            <SummaryBlock label="Why It Matters" text={report.scoreExplanation} onJump={jumpTo} />
-            <SummaryBlock
-              label="Worth Your Time?"
-              onJump={jumpTo}
-              text={
-                report.worthWatching === "Yes"
-                  ? "Yes — this one earns its runtime."
-                  : report.worthWatching === "Skim"
-                    ? "Worth a skim — watch the highlighted sections, skip the rest."
-                    : "No — the Skip Map below shows why."
-              }
+          <div className="p-8">
+            <div className="grid gap-6 sm:grid-cols-3">
+              <SummaryBlock label="The Idea" text={report.executiveSummary} onJump={jumpTo} />
+              <SummaryBlock label="Why It Matters" text={report.scoreExplanation} onJump={jumpTo} />
+              <SummaryBlock
+                label="Worth Your Time?"
+                onJump={jumpTo}
+                text={
+                  report.worthWatching === "Yes"
+                    ? "Yes — this one earns its runtime."
+                    : report.worthWatching === "Skim"
+                      ? "Worth a skim — watch the highlighted sections, skip the rest."
+                      : "No — the Skip Map below shows why."
+                }
+              />
+            </div>
+            <ListenPanel
+              sections={listenSections}
+              state={listenState}
+              onContinue={() => {
+                document
+                  .querySelector('[data-section="learning-timeline"]')
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
             />
           </div>
         </ElevatedCard>
@@ -650,7 +700,9 @@ function Report({ report }: { report: LearningReport }) {
         </ElevatedCard>
 
         {/* Learning Timeline */}
-        <SectionTitle icon={ListTree}>Learning Timeline</SectionTitle>
+        <div data-section="learning-timeline">
+          <SectionTitle icon={ListTree}>Learning Timeline</SectionTitle>
+        </div>
         <ElevatedCard interactive>
           <ol ref={timelineRef} className="divide-y divide-border/40">
             {report.chapters.map((c, i) => {
