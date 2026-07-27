@@ -17,10 +17,6 @@ export const Route = createFileRoute("/compare")({
   component: ComparePage,
 });
 
-function thumbnailUrl(videoId: string): string {
-  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-}
-
 // Plain, deterministic recommendation sentence computed from data already
 // on hand — no extra AI call, zero added token/latency cost.
 function buildRecommendation(a: LearningReport, b: LearningReport): string {
@@ -172,18 +168,13 @@ function ComparePage() {
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-12"
               >
-                {/* Preview cards — immediate visual confirmation of what's being compared */}
-                <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
-                  <PreviewCard report={reportA!} delay={0} />
-                  <PreviewCard report={reportB!} delay={0.1} />
-                </div>
-
-                {/* Recommendation — computed from existing scores, no extra AI call */}
+                {/* Recommendation — computed from existing scores, no extra AI call.
+                    Shown above the cards so the verdict is the first thing seen. */}
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.25 }}
-                  className="relative mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-primary/[0.05] p-6"
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  className="relative overflow-hidden rounded-2xl border border-primary/30 bg-primary/[0.05] p-6"
                   style={{ boxShadow: "var(--shadow-glow)" }}
                 >
                   <div className="flex items-start gap-3">
@@ -194,18 +185,19 @@ function ComparePage() {
                       <p className="text-xs font-semibold uppercase tracking-wider text-primary">
                         🏆 WisTube Recommendation
                       </p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-foreground/90">
+                      <p className="mt-1.5 text-base font-semibold leading-relaxed text-foreground">
                         {buildRecommendation(reportA!, reportB!)}
                       </p>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Existing side-by-side comparison results — same logic, just relocated */}
+                {/* Single merged card per video — thumbnail, score, and stats
+                    all in one place. No separate preview block anymore. */}
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.35 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
                   className="relative mt-6 grid items-stretch gap-4 sm:grid-cols-2 sm:gap-6"
                 >
                   <CompareCard report={reportA!} winner={aWins} />
@@ -269,36 +261,5 @@ function VideoInputCard({
         />
       </div>
     </div>
-  );
-}
-
-function PreviewCard({ report, delay }: { report: LearningReport; delay: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl"
-      style={{ boxShadow: "var(--shadow-card)" }}
-    >
-      <div className="aspect-video w-full overflow-hidden bg-secondary/40">
-        <img
-          src={thumbnailUrl(report.videoId)}
-          alt={report.title}
-          className="h-full w-full object-cover"
-        />
-      </div>
-      <div className="p-4">
-        <p className="truncate text-xs uppercase tracking-wider text-muted-foreground">
-          {report.channel}
-        </p>
-        <h3 className="mt-1 line-clamp-2 text-sm font-semibold tracking-tight text-foreground">
-          {report.title}
-        </h3>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {Math.round(report.durationSec / 60)} min
-        </p>
-      </div>
-    </motion.div>
   );
 }
