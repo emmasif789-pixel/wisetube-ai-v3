@@ -51,7 +51,7 @@ export function Debate({ report }: { report: LearningReport }) {
         className="flex w-full items-center justify-between gap-3 rounded-xl p-4 text-left transition-colors hover:bg-secondary/40"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-gradient-to-br from-secondary to-secondary/50">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-gradient-to-br from-primary/20 to-primary/5">
             <Scale className="h-4 w-4 text-primary" strokeWidth={2.2} />
           </div>
           <div>
@@ -90,16 +90,19 @@ export function Debate({ report }: { report: LearningReport }) {
                     label="Main Viewpoint"
                     accent="emerald"
                     points={result.mainViewpoint}
+                    delay={0}
                   />
                   <DebateSection
                     icon={Split}
                     label="Counterargument"
-                    accent="blue"
+                    accent="amber"
                     points={result.counterargument}
+                    delay={0.08}
                   />
                   <ConclusionSection
                     label="Balanced Conclusion"
                     text={result.balancedConclusion}
+                    delay={0.16}
                   />
                 </>
               ) : (
@@ -109,16 +112,19 @@ export function Debate({ report }: { report: LearningReport }) {
                     label="Primary Approach"
                     accent="emerald"
                     points={result.primaryApproach}
+                    delay={0}
                   />
                   <DebateSection
                     icon={Split}
                     label="Alternative Approaches"
-                    accent="blue"
+                    accent="amber"
                     points={result.alternativeApproaches}
+                    delay={0.08}
                   />
                   <ConclusionSection
                     label="Recommendation"
                     text={result.recommendation}
+                    delay={0.16}
                   />
                 </>
               )}
@@ -130,9 +136,24 @@ export function Debate({ report }: { report: LearningReport }) {
   );
 }
 
-const accentClasses: Record<string, { dot: string; border: string }> = {
-  emerald: { dot: "bg-emerald-500", border: "hover:border-emerald-500/40" },
-  blue: { dot: "bg-blue-500", border: "hover:border-blue-500/40" },
+const accentClasses: Record<
+  string,
+  { dot: string; border: string; iconBg: string; iconText: string; topBar: string }
+> = {
+  emerald: {
+    dot: "bg-emerald-500",
+    border: "border-emerald-500/25 hover:border-emerald-500/50",
+    iconBg: "bg-emerald-500/15",
+    iconText: "text-emerald-500",
+    topBar: "bg-emerald-500",
+  },
+  amber: {
+    dot: "bg-amber-400",
+    border: "border-amber-400/25 hover:border-amber-400/50",
+    iconBg: "bg-amber-400/15",
+    iconText: "text-amber-500",
+    topBar: "bg-amber-400",
+  },
 };
 
 function DebateSection({
@@ -140,27 +161,36 @@ function DebateSection({
   label,
   accent,
   points,
+  delay = 0,
 }: {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   label: string;
-  accent: "emerald" | "blue";
+  accent: "emerald" | "amber";
   points: string[];
+  delay?: number;
 }) {
   const a = accentClasses[accent];
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -2 }}
       className={cn(
-        "rounded-xl border border-border/60 bg-secondary/30 p-4 transition-colors",
+        "relative overflow-hidden rounded-xl border bg-secondary/30 p-4 transition-colors",
         a.border,
       )}
     >
+      <span className={cn("absolute inset-x-0 top-0 h-0.5", a.topBar)} aria-hidden />
       <div className="flex items-center gap-2">
-        <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2.2} />
+        <div className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md", a.iconBg)}>
+          <Icon className={cn("h-3.5 w-3.5", a.iconText)} strokeWidth={2.2} />
+        </div>
         <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
           {label}
         </p>
       </div>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-3 space-y-2.5">
         {points.map((p, i) => (
           <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
             <span className={cn("mt-1 h-1.5 w-1.5 shrink-0 rounded-full", a.dot)} />
@@ -168,20 +198,38 @@ function DebateSection({
           </li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }
 
-function ConclusionSection({ label, text }: { label: string; text: string }) {
+function ConclusionSection({
+  label,
+  text,
+  delay = 0,
+}: {
+  label: string;
+  text: string;
+  delay?: number;
+}) {
   return (
-    <div className="rounded-xl border border-primary/30 bg-primary/[0.06] p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -2 }}
+      className="relative overflow-hidden rounded-xl border border-primary/30 bg-primary/[0.06] p-4"
+      style={{ boxShadow: "var(--shadow-glow)" }}
+    >
+      <span className="absolute inset-x-0 top-0 h-0.5 bg-primary" aria-hidden />
       <div className="flex items-center gap-2">
-        <Scale className="h-3.5 w-3.5 text-primary" strokeWidth={2.2} />
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/15">
+          <Scale className="h-3.5 w-3.5 text-primary" strokeWidth={2.2} />
+        </div>
         <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
           {label}
         </p>
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{text}</p>
-    </div>
+      <p className="mt-3 text-xs leading-relaxed text-foreground/80">{text}</p>
+    </motion.div>
   );
 }
