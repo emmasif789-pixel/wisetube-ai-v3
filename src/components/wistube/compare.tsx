@@ -11,6 +11,10 @@ import { cn } from "@/lib/utils";
 export const YOUTUBE_REGEX =
   /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/|embed\/|v\/)[\w-]{6,}|youtu\.be\/[\w-]{6,})(\S*)?$/i;
 
+function thumbnailUrl(videoId: string): string {
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
 export function Compare({ report }: { report: LearningReport }) {
   const analyze = useServerFn(analyzeVideo);
   const [url, setUrl] = useState("");
@@ -132,7 +136,7 @@ export function CompareCard({
       whileHover={{ y: -4 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
       className={cn(
-        "relative flex h-full flex-col rounded-2xl border p-5 transition-all",
+        "relative flex h-full flex-col overflow-hidden rounded-2xl border transition-all",
         winner
           ? "border-primary/50 bg-primary/5"
           : "border-border/60 bg-secondary/20",
@@ -140,54 +144,94 @@ export function CompareCard({
       style={winner ? { boxShadow: "var(--shadow-glow)" } : undefined}
     >
       {winner && (
-        <span className="absolute -top-2.5 left-4 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-background px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
+        <span className="absolute left-4 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-background/90 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary backdrop-blur">
           <Trophy className="h-3 w-3" /> Better pick
         </span>
       )}
-      <div className="flex-1">
-        <p className="truncate text-xs uppercase tracking-wider text-muted-foreground">
-          {report.channel}
-        </p>
-        <h3 className="mt-1 line-clamp-2 text-base font-semibold tracking-tight text-foreground">
-          {report.title}
-        </h3>
-        <div className="mt-4 flex items-end gap-2">
-          <div className="text-3xl font-semibold tracking-tight">
-            {report.overallScore.toFixed(1)}
-          </div>
-          <div className="pb-1 text-xs text-muted-foreground">/ 10</div>
-        </div>
-        <div className="mt-1 text-lg leading-none">
-          {renderBooks(report.overallScore)}
-        </div>
-        <p className="mt-4 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
-          {report.executiveSummary}
-        </p>
-        <a
-          href={`/report?url=${encodeURIComponent(report.url)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-        >
-          View full report <ExternalLink className="h-3 w-3" />
-        </a>
+
+      {/* Compact thumbnail, merged into the same card — no separate preview block */}
+      <div className="relative aspect-[21/9] w-full overflow-hidden bg-secondary/40">
+        <img
+          src={thumbnailUrl(report.videoId)}
+          alt={report.title}
+          className="h-full w-full object-cover"
+        />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to top, rgba(10,10,14,0.85) 0%, rgba(10,10,14,0.35) 45%, transparent 75%)",
+          }}
+          aria-hidden
+        />
       </div>
-      <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <Stat label="Worth" value={report.worthWatching} />
-        <Stat label="Length" value={`${Math.round(report.durationSec / 60)}m`} />
-        <Stat label="Saved" value={`${Math.round(report.timeSavedSec / 60)}m`} />
-      </dl>
+
+      <div className="flex flex-1 flex-col p-5 pt-4">
+        <div className="flex-1">
+          <p className="truncate text-xs uppercase tracking-wider text-muted-foreground">
+            {report.channel}
+          </p>
+          <h3 className="mt-1 line-clamp-2 text-base font-semibold tracking-tight text-foreground">
+            {report.title}
+          </h3>
+          <div className="mt-4 flex items-end gap-2">
+            <div className="text-3xl font-semibold tracking-tight">
+              {report.overallScore.toFixed(1)}
+            </div>
+            <div className="pb-1 text-xs text-muted-foreground">/ 10 Quality Score</div>
+          </div>
+          <div
+            className="mt-1 text-lg leading-none"
+            title={`Quality score: ${report.overallScore.toFixed(1)} out of 10`}
+          >
+            {renderBooks(report.overallScore)}
+          </div>
+          <p className="mt-4 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
+            {report.executiveSummary}
+          </p>
+          <a
+            href={`/report?url=${encodeURIComponent(report.url)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
+            View full report <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+        <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <Stat
+            label="Worth"
+            value={report.worthWatching}
+            sublabel={report.category}
+          />
+          <Stat label="Length" value={`${Math.round(report.durationSec / 60)}m`} />
+          <Stat label="Saved" value={`${Math.round(report.timeSavedSec / 60)}m`} />
+        </dl>
+      </div>
     </motion.div>
   );
 }
 
-export function Stat({ label, value }: { label: string; value: string }) {
+export function Stat({
+  label,
+  value,
+  sublabel,
+}: {
+  label: string;
+  value: string;
+  sublabel?: string;
+}) {
   return (
     <div className="rounded-lg border border-border/60 bg-background/40 py-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
       <div className="mt-0.5 text-sm font-medium">{value}</div>
+      {sublabel && (
+        <div className="mt-0.5 truncate px-1 text-[9px] text-muted-foreground/70">
+          {sublabel}
+        </div>
+      )}
     </div>
   );
 }
