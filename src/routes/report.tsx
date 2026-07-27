@@ -38,7 +38,6 @@ import { Quiz } from "@/components/wistube/quiz";
 import { Compare } from "@/components/wistube/compare";
 import { Debate } from "@/components/wistube/debate";
 import { CircularRing } from "@/components/wistube/circular-ring";
-import { ReportCard } from "@/components/wistube/report-card";
 import { useListeningMode } from "@/hooks/use-listening-mode";
 import { ListenTriggerButton, ListenPanel } from "@/components/wistube/listening-mode";
 import { cn } from "@/lib/utils";
@@ -525,11 +524,6 @@ function Report({
             </div>
           </div>
         </ElevatedCard>
-
-        {/* Report Card — Spotify-Wrapped-style shareable snapshot */}
-        <div className="mt-8">
-          <ReportCard report={report} generationTimeSec={generationTimeSec} />
-        </div>
 
         {/* Key Insights — scan it in 30 seconds */}
         <SectionTitle icon={CheckCircle2}>Key Insights</SectionTitle>
