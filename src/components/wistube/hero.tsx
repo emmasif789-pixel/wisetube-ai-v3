@@ -11,7 +11,23 @@ const YOUTUBE_REGEX =
 export function Hero() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const navigate = useNavigate();
+
+  const DEMO_VIDEO = {
+    label: "Sundar Pichai",
+    url: "https://www.youtube.com/watch?v=ReGC2GtWFp4",
+  };
+
+  const handleDemoClick = () => {
+    if (loading) return;
+    setUrl(DEMO_VIDEO.url);
+    setInputFocused(false);
+    setLoading(true);
+    setTimeout(() => {
+      navigate({ to: "/report", search: { url: DEMO_VIDEO.url } });
+    }, 400);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,33 +46,6 @@ export function Hero() {
       navigate({ to: "/report", search: { url: trimmed } });
     }, 400);
   };
-
-  const handleSampleClick = (sampleUrl: string) => {
-    if (loading) return;
-    setUrl(sampleUrl);
-    setLoading(true);
-    setTimeout(() => {
-      navigate({ to: "/report", search: { url: sampleUrl } });
-    }, 400);
-  };
-
-  const SAMPLE_VIDEOS = [
-    {
-      emoji: "🎙",
-      label: "AI Podcast",
-      url: "https://www.youtube.com/watch?v=ReGC2GtWFp4",
-    },
-    {
-      emoji: "🎓",
-      label: "Tech Lecture",
-      url: "https://www.youtube.com/watch?v=jGwO_UgTS7I",
-    },
-    {
-      emoji: "💼",
-      label: "CEO Interview",
-      url: "https://www.youtube.com/watch?v=Q-zuTZuYeCg",
-    },
-  ];
 
   return (
     <section
@@ -136,7 +125,7 @@ export function Hero() {
               className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-70"
               aria-hidden
             />
-            <div className="flex flex-1 items-center gap-3 px-4 py-2.5">
+            <div className="relative flex flex-1 items-center gap-3 px-4 py-2.5">
               <Youtube className="h-5 w-5 shrink-0 text-muted-foreground transition-colors duration-200 group-focus-within:text-primary" />
               <input
                 type="url"
@@ -145,8 +134,40 @@ export function Hero() {
                 aria-label="YouTube video URL"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setTimeout(() => setInputFocused(false), 150)}
                 disabled={loading}
               />
+              <AnimatePresence>
+                {inputFocused && !loading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="absolute left-0 right-0 top-[calc(100%+10px)] z-20 overflow-hidden rounded-xl border border-white/[0.09] bg-card/95 p-1.5 backdrop-blur-xl"
+                    style={{ boxShadow: "var(--shadow-card)" }}
+                  >
+                    <p className="px-2.5 pb-1 pt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+                      Try a demo
+                    </p>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={handleDemoClick}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-150 hover:bg-secondary/60"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                        <Youtube className="h-3.5 w-3.5 text-primary" />
+                      </span>
+                      <span className="flex-1 text-sm text-foreground">
+                        {DEMO_VIDEO.label}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             <Button
               type="submit"
@@ -176,31 +197,6 @@ export function Hero() {
             For lengthy videos, we intelligently focus on the richest sections first.
           </p>
         </motion.form>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut", delay: 0.35 }}
-          className="mx-auto mt-8 max-w-2xl"
-        >
-          <p className="text-xs text-muted-foreground/70">
-            Don't have a video yet? Try a sample analysis
-          </p>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-            {SAMPLE_VIDEOS.map((s) => (
-              <button
-                key={s.url}
-                type="button"
-                disabled={loading}
-                onClick={() => handleSampleClick(s.url)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-secondary/40 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-md transition-all duration-200 hover:border-primary/40 hover:bg-secondary/70 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-              >
-                <span aria-hidden>{s.emoji}</span>
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
       </div>
 
       {/* Scroll cue */}
