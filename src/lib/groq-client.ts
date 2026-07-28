@@ -2,21 +2,27 @@
 // means one place to trust for rate-limit handling, instead of three
 // separate copies that can drift out of sync.
 //
-// KEY ROTATION: set GROQ_API_KEY, GROQ_API_KEY_2, and GROQ_API_KEY_3 in your
-// environment — each is a separate Groq API key with its own independent
-// daily token budget, so 3 keys roughly triples total daily capacity.
+// KEY ROTATION: set GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3,
+// GROQ_API_KEY_4, and GROQ_API_KEY_5 in your environment.
+//
+// IMPORTANT: capacity only multiplies if keys come from SEPARATE Groq
+// accounts — keys on the same account share one org-level daily token
+// budget. Current setup: 4 independent accounts across these 5 keys
+// (3 accounts from the original 3 keys, 1 new account for keys 4 & 5),
+// so real daily capacity is ~4x a single account, not 5x.
+//
 // Only GROQ_API_KEY is required; the others are optional extras.
 function getApiKeys(): string[] {
   const keys = [
     process.env.GROQ_API_KEY,
     process.env.GROQ_API_KEY_2,
     process.env.GROQ_API_KEY_3,
+    process.env.GROQ_API_KEY_4,
+    process.env.GROQ_API_KEY_5,
   ].filter((k): k is string => Boolean(k && k.trim()));
   return keys;
 }
-
 export type GroqMessage = { role: "system" | "user"; content: string };
-
 export async function callGroq(args: {
   models: string[];
   messages: GroqMessage[];
@@ -29,9 +35,7 @@ export async function callGroq(args: {
       "AI key missing. Please add GROQ_API_KEY to enable this feature.",
     );
   }
-
   let lastStatus = 0;
-
   for (const key of keys) {
     for (const model of args.models) {
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -49,9 +53,7 @@ export async function callGroq(args: {
             max_tokens: args.maxTokens,
           }),
         });
-
         lastStatus = res.status;
-
         if (res.ok) {
           const json = (await res.json()) as {
             choices?: Array<{ message?: { content?: string } }>;
@@ -60,7 +62,6 @@ export async function callGroq(args: {
           if (!content) throw new Error("AI returned an empty response.");
           return content;
         }
-
         // One short backoff-and-retry on rate limit before moving on.
         if (res.status === 429 && attempt === 0) {
           await new Promise((r) => setTimeout(r, 3000));
@@ -70,7 +71,6 @@ export async function callGroq(args: {
       }
     }
   }
-
   if (lastStatus === 429) {
     throw new Error("AI is busy right now. Please try again in a moment.");
   }
