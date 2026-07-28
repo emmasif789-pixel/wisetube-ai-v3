@@ -15,8 +15,8 @@ export function Hero() {
   const navigate = useNavigate();
 
   const DEMO_VIDEO = {
-    label: "Sundar Pichai",
-    url: "https://www.youtube.com/watch?v=ReGC2GtWFp4",
+    label: "ELON MUSK",
+    url: "https://youtu.be/Rni7Fz7208c?si=zTa6FUeBcyChDoXI",
   };
 
   const handleDemoClick = () => {
