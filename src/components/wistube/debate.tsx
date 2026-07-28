@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ChevronDown, Scale, Split, Sparkles, Wrench } from "lucide-react";
 import { generateDebate, type DebateResult } from "@/lib/debate.functions";
 import type { LearningReport } from "@/lib/report-data";
+import { CopyButton } from "@/components/wistube/copy-button";
 import { cn } from "@/lib/utils";
 
 export function Debate({ report }: { report: LearningReport }) {
@@ -43,14 +44,39 @@ export function Debate({ report }: { report: LearningReport }) {
 
   const isDebate = result.mode === "debate";
 
+  const getCopyText = () => {
+    if (isDebate) {
+      return [
+        "Main Viewpoint:",
+        ...result.mainViewpoint.map((p) => `• ${p}`),
+        "",
+        "Counterargument:",
+        ...result.counterargument.map((p) => `• ${p}`),
+        "",
+        "Balanced Conclusion:",
+        result.balancedConclusion,
+      ].join("\n");
+    }
+    return [
+      "Primary Approach:",
+      ...result.primaryApproach.map((p) => `• ${p}`),
+      "",
+      "Alternative Approaches:",
+      ...result.alternativeApproaches.map((p) => `• ${p}`),
+      "",
+      "Recommendation:",
+      result.recommendation,
+    ].join("\n");
+  };
+
   return (
     <div className="p-2">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-3 rounded-xl p-4 text-left transition-colors hover:bg-secondary/40"
-      >
-        <div className="flex items-center gap-3">
+      <div className="flex w-full items-center justify-between gap-3 rounded-xl p-4 transition-colors hover:bg-secondary/40">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 items-center gap-3 text-left"
+        >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-gradient-to-br from-primary/20 to-primary/5">
             <Scale className="h-4 w-4 text-primary" strokeWidth={2.2} />
           </div>
@@ -64,14 +90,24 @@ export function Debate({ report }: { report: LearningReport }) {
                 : "Compare other valid ways to approach the same goal."}
             </p>
           </div>
+        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <CopyButton getText={getCopyText} />
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-label={open ? "Collapse" : "Expand"}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+          >
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 shrink-0 transition-transform duration-300",
+                open && "rotate-180",
+              )}
+            />
+          </button>
         </div>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300",
-            open && "rotate-180",
-          )}
-        />
-      </button>
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (
