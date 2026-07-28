@@ -23,19 +23,70 @@ type ListeningState = {
 
 export function ListenTriggerButton({ state }: { state: ListeningState }) {
   if (!state.supported) return null;
+  const isPlaying = state.playing && !state.paused;
+
   return (
-    <Button
+    <button
+      type="button"
       onClick={state.toggle}
-      variant="outline"
-      size="sm"
+      aria-label={state.active ? "Stop listening" : "Listen to summary"}
       className={cn(
-        "h-8 gap-1.5 rounded-full px-3 text-xs",
-        state.active && "border-primary/50 text-primary",
+        "group relative flex h-9 items-center gap-2 overflow-hidden rounded-full px-4 text-xs font-medium transition-all duration-300 active:scale-[0.97]",
+        state.active
+          ? "text-primary-foreground"
+          : "border border-primary/30 bg-secondary/40 text-foreground hover:border-primary/50 hover:bg-secondary/60",
       )}
+      style={
+        state.active
+          ? {
+              backgroundImage:
+                "linear-gradient(135deg, var(--color-primary), oklch(0.6 0.2 300))",
+              boxShadow: "var(--shadow-glow)",
+            }
+          : undefined
+      }
     >
-      <Headphones className={cn("h-3.5 w-3.5", state.playing && !state.paused && "animate-pulse")} />
-      {state.active ? "Listening" : "Listen"}
-    </Button>
+      {/* Pulsing halo ring while actively playing */}
+      {isPlaying && (
+        <motion.span
+          className="pointer-events-none absolute inset-0 rounded-full"
+          style={{ boxShadow: "0 0 0 2px var(--color-primary)" }}
+          animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.18, 1] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden
+        />
+      )}
+
+      {/* Icon: headphones normally, mini animated waveform while playing */}
+      {isPlaying ? (
+        <span className="flex h-3.5 w-3.5 shrink-0 items-end gap-[2px]" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <motion.span
+              key={i}
+              className="w-[2.5px] rounded-full bg-primary-foreground"
+              animate={{ height: ["30%", "100%", "45%", "85%", "30%"] }}
+              transition={{
+                duration: 0.9,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.15,
+              }}
+            />
+          ))}
+        </span>
+      ) : (
+        <Headphones
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 transition-transform duration-300 group-hover:scale-110",
+            state.active && "text-primary-foreground",
+          )}
+        />
+      )}
+
+      <span className="relative">
+        {state.active ? (state.paused ? "Paused" : "Listening") : "Listen"}
+      </span>
+    </button>
   );
 }
 
