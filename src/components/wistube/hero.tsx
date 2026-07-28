@@ -31,6 +31,33 @@ export function Hero() {
     }, 400);
   };
 
+  const handleSampleClick = (sampleUrl: string) => {
+    if (loading) return;
+    setUrl(sampleUrl);
+    setLoading(true);
+    setTimeout(() => {
+      navigate({ to: "/report", search: { url: sampleUrl } });
+    }, 400);
+  };
+
+  const SAMPLE_VIDEOS = [
+    {
+      emoji: "🎙",
+      label: "AI Podcast",
+      url: "https://www.youtube.com/watch?v=ReGC2GtWFp4",
+    },
+    {
+      emoji: "🎓",
+      label: "Tech Lecture",
+      url: "https://www.youtube.com/watch?v=jGwO_UgTS7I",
+    },
+    {
+      emoji: "💼",
+      label: "CEO Interview",
+      url: "https://www.youtube.com/watch?v=Q-zuTZuYeCg",
+    },
+  ];
+
   return (
     <section
       id="home"
@@ -149,6 +176,31 @@ export function Hero() {
             For lengthy videos, we intelligently focus on the richest sections first.
           </p>
         </motion.form>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.35 }}
+          className="mx-auto mt-8 max-w-2xl"
+        >
+          <p className="text-xs text-muted-foreground/70">
+            Don't have a video yet? Try a sample analysis
+          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+            {SAMPLE_VIDEOS.map((s) => (
+              <button
+                key={s.url}
+                type="button"
+                disabled={loading}
+                onClick={() => handleSampleClick(s.url)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-secondary/40 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-md transition-all duration-200 hover:border-primary/40 hover:bg-secondary/70 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+              >
+                <span aria-hidden>{s.emoji}</span>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </motion.div>
       </div>
 
       {/* Scroll cue */}
