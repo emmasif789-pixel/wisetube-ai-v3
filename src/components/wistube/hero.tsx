@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, Sparkles, Youtube } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
