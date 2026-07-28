@@ -527,60 +527,6 @@ function Report({
           </div>
         </ElevatedCard>
 
-        {/* Key Insights — scan it in 30 seconds */}
-        <SectionTitle icon={CheckCircle2}>Key Insights</SectionTitle>
-        <ElevatedCard>
-          <ul className="grid grid-cols-1 gap-x-8 gap-y-3 p-8 sm:grid-cols-2">
-            {report.keyInsights.map((insight, i) => (
-              <li key={i} className="flex items-start gap-2.5">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span className="text-sm leading-relaxed text-foreground/90">
-                  {insight.title}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </ElevatedCard>
-
-        {/* Executive Summary — learn it in 3-5 minutes, with AI Listening Mode */}
-        <div className="mt-12 mb-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              Executive Summary
-            </h2>
-          </div>
-          <ListenTriggerButton state={listenState} />
-        </div>
-        <ElevatedCard>
-          <div className="p-8">
-            <div className="grid gap-6 sm:grid-cols-3">
-              <SummaryBlock label="The Idea" text={report.executiveSummary} onJump={jumpTo} />
-              <SummaryBlock label="Why It Matters" text={report.scoreExplanation} onJump={jumpTo} />
-              <SummaryBlock
-                label="Worth Your Time?"
-                onJump={jumpTo}
-                text={
-                  report.worthWatching === "Yes"
-                    ? "Yes — this one earns its runtime."
-                    : report.worthWatching === "Skim"
-                      ? "Worth a skim — watch the highlighted sections, skip the rest."
-                      : "No — the Skip Map below shows why."
-                }
-              />
-            </div>
-            <ListenPanel
-              sections={listenSections}
-              state={listenState}
-              onContinue={() => {
-                document
-                  .querySelector('[data-section="learning-timeline"]')
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            />
-          </div>
-        </ElevatedCard>
-
         {/* Skip Map */}
         <SectionTitle icon={MapIcon}>Skip Map</SectionTitle>
         <ElevatedCard interactive>
@@ -693,6 +639,60 @@ function Report({
               })}
             </ul>
           </div>
+        </ElevatedCard>
+
+        {/* Executive Summary — learn it in 3-5 minutes, with AI Listening Mode */}
+        <div className="mt-12 mb-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              Executive Summary
+            </h2>
+          </div>
+          <ListenTriggerButton state={listenState} />
+        </div>
+        <ElevatedCard>
+          <div className="p-8">
+            <div className="grid gap-6 sm:grid-cols-3">
+              <SummaryBlock label="The Idea" text={report.executiveSummary} onJump={jumpTo} />
+              <SummaryBlock label="Why It Matters" text={report.scoreExplanation} onJump={jumpTo} />
+              <SummaryBlock
+                label="Worth Your Time?"
+                onJump={jumpTo}
+                text={
+                  report.worthWatching === "Yes"
+                    ? "Yes — this one earns its runtime."
+                    : report.worthWatching === "Skim"
+                      ? "Worth a skim — watch the highlighted sections, skip the rest."
+                      : "No — the Skip Map above shows why."
+                }
+              />
+            </div>
+            <ListenPanel
+              sections={listenSections}
+              state={listenState}
+              onContinue={() => {
+                document
+                  .querySelector('[data-section="learning-timeline"]')
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            />
+          </div>
+        </ElevatedCard>
+
+        {/* Key Insights — scan it in 30 seconds */}
+        <SectionTitle icon={CheckCircle2}>Key Insights</SectionTitle>
+        <ElevatedCard>
+          <ul className="grid grid-cols-1 gap-x-8 gap-y-3 p-8 sm:grid-cols-2">
+            {report.keyInsights.map((insight, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span className="text-sm leading-relaxed text-foreground/90">
+                  {insight.title}
+                </span>
+              </li>
+            ))}
+          </ul>
         </ElevatedCard>
 
         {/* Learning Timeline */}
