@@ -150,6 +150,34 @@ export function Hero() {
           </p>
         </motion.form>
       </div>
+
+      {/* Scroll cue */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.9 }}
+        className="pointer-events-none absolute inset-x-0 bottom-6 flex flex-col items-center gap-2 sm:bottom-10"
+        aria-hidden
+      >
+        <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground/50">
+          Scroll
+        </span>
+        <div className="relative h-9 w-px overflow-hidden rounded-full bg-gradient-to-b from-transparent via-border to-transparent">
+          <motion.span
+            className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 rounded-full"
+            style={{
+              background: "var(--color-primary)",
+              boxShadow: "0 0 8px 1px var(--color-primary)",
+            }}
+            animate={{ y: [0, 30, 0], opacity: [0, 1, 0] }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        </div>
+      </motion.div>
     </section>
   );
 }
