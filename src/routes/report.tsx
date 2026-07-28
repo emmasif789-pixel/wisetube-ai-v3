@@ -39,6 +39,7 @@ import { Compare } from "@/components/wistube/compare";
 import { Debate } from "@/components/wistube/debate";
 import { useListeningMode } from "@/hooks/use-listening-mode";
 import { ListenTriggerButton, ListenPanel } from "@/components/wistube/listening-mode";
+import { CopyButton } from "@/components/wistube/copy-button";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({ url: z.string().optional() });
@@ -369,6 +370,12 @@ function Report({
 
   const verdict = VERDICT_META[report.worthWatching];
 
+  const getSummaryCopyText = () =>
+    listenSections.map((s) => `${s.label}\n${s.text}`).join("\n\n");
+
+  const getInsightsCopyText = () =>
+    report.keyInsights.map((i) => `• ${i.title}`).join("\n");
+
   return (
     <section className="relative pt-32 pb-24 sm:pt-40">
       <div className="mx-auto max-w-5xl px-6">
@@ -649,7 +656,10 @@ function Report({
               Executive Summary
             </h2>
           </div>
-          <ListenTriggerButton state={listenState} />
+          <div className="flex items-center gap-2">
+            <CopyButton getText={getSummaryCopyText} />
+            <ListenTriggerButton state={listenState} />
+          </div>
         </div>
         <ElevatedCard>
           <div className="p-8">
@@ -681,7 +691,9 @@ function Report({
         </ElevatedCard>
 
         {/* Key Insights — scan it in 30 seconds */}
-        <SectionTitle icon={CheckCircle2}>Key Insights</SectionTitle>
+        <SectionTitle icon={CheckCircle2} right={<CopyButton getText={getInsightsCopyText} />}>
+          Key Insights
+        </SectionTitle>
         <ElevatedCard>
           <ul className="grid grid-cols-1 gap-x-8 gap-y-3 p-8 sm:grid-cols-2">
             {report.keyInsights.map((insight, i) => (
@@ -883,16 +895,21 @@ function ElevatedCard({
 function SectionTitle({
   icon: Icon,
   children,
+  right,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
+  right?: React.ReactNode;
 }) {
   return (
-    <div className="mt-12 mb-4 flex items-center gap-2">
-      <Icon className="h-4 w-4 text-primary" />
-      <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-        {children}
-      </h2>
+    <div className="mt-12 mb-4 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          {children}
+        </h2>
+      </div>
+      {right}
     </div>
   );
 }
