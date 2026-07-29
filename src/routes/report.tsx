@@ -101,7 +101,10 @@ function ReportPage() {
 
   useEffect(() => {
     if (query.isError && query.error) {
-      toast.error(query.error.message || "Something went wrong analyzing this video.");
+      // No-captions failures already get a dedicated, friendly error screen —
+      // showing a toast on top of that is redundant and feels alarming.
+      if (query.error.message === NO_CAPTIONS_MESSAGE) return;
+      toast.error("We couldn't quite process that video. Mind trying another link?");
     }
   }, [query.isError, query.error]);
 
