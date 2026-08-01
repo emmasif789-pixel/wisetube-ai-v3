@@ -31,13 +31,20 @@ export async function callGroq(args: {
   messages: GroqMessage[];
   maxTokens: number;
   temperature?: number;
+  // Which key to start from. Report/Quiz/Debate all fire close together on
+  // page load — without an offset they'd all hit key[0] at once and burn
+  // its TPM budget in a single burst. Give each feature its own starting
+  // point so simultaneous calls land on different keys.
+  keyOffset?: number;
 }): Promise<string> {
-  const keys = getApiKeys();
-  if (!keys.length) {
+  const allKeys = getApiKeys();
+  if (!allKeys.length) {
     throw new Error(
       "AI key missing. Please add GROQ_API_KEY to enable this feature.",
     );
   }
+  const offset = ((args.keyOffset ?? 0) % allKeys.length + allKeys.length) % allKeys.length;
+  const keys = [...allKeys.slice(offset), ...allKeys.slice(0, offset)];
   let lastStatus = 0;
   for (const key of keys) {
     for (const model of args.models) {
