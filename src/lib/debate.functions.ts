@@ -31,7 +31,12 @@ const contextSchema = z.object({
 const debateSchema = z.object({
   mainViewpoint: z.array(z.string()).min(2).max(4),
   counterargument: z.array(z.string()).min(2).max(4),
-  balancedConclusion: z.string(),
+  // The model occasionally returns this as an array of sentences instead of
+  // one joined string, even though the prompt asks for a string. Accept
+  // either shape and normalize to a string rather than failing validation.
+  balancedConclusion: z
+    .union([z.string(), z.array(z.string())])
+    .transform((v) => (Array.isArray(v) ? v.join(" ") : v)),
 });
 
 export const generateDebate = createServerFn({ method: "POST" })
