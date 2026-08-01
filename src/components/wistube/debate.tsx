@@ -12,6 +12,7 @@ export function Debate({ report }: { report: LearningReport }) {
   const [result, setResult] = useState<DebateResult | null>(null);
   const [failed, setFailed] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [open, setOpen] = useState(true);
 
   // Generate in the background once the main report is ready — never blocks
@@ -20,30 +21,38 @@ export function Debate({ report }: { report: LearningReport }) {
   // vanishing silently.
   useEffect(() => {
     let cancelled = false;
-    gen({
-      data: {
-        context: {
-          title: report.title,
-          category: report.category,
-          executiveSummary: report.executiveSummary,
-          keyInsights: report.keyInsights,
+    // Small jitter so this doesn't fire in the exact same tick as Quiz's
+    // request on page load — spreads out the initial burst against Groq's
+    // per-key rate limit instead of hitting it with two requests at once.
+    const jitter = 250 + Math.random() * 400;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      gen({
+        data: {
+          context: {
+            title: report.title,
+            category: report.category,
+            executiveSummary: report.executiveSummary,
+            keyInsights: report.keyInsights,
+          },
         },
-      },
-    })
-      .then((res) => {
-        if (!cancelled) setResult(res);
       })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error("[AI Debate] generation failed:", err);
-        setErrorMsg(err instanceof Error ? err.message : "AI Debate failed to generate.");
-        setFailed(true);
-      });
+        .then((res) => {
+          if (!cancelled) setResult(res);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.error("[AI Debate] generation failed:", err);
+          setErrorMsg(err instanceof Error ? err.message : "AI Debate failed to generate.");
+          setFailed(true);
+        });
+    }, jitter);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [report.videoId]);
+  }, [report.videoId, retryKey]);
 
   if (failed) {
     return (
@@ -52,10 +61,21 @@ export function Debate({ report }: { report: LearningReport }) {
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10">
             <Scale className="h-4 w-4 text-destructive" strokeWidth={2.2} />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-semibold text-foreground">AI Debate unavailable</p>
             <p className="text-xs text-muted-foreground">{errorMsg}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setFailed(false);
+              setErrorMsg(null);
+              setRetryKey((k) => k + 1);
+            }}
+            className="shrink-0 rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-destructive/10"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
