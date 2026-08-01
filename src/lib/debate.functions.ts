@@ -53,6 +53,7 @@ ${data.context.keyInsights.map((k) => `- ${k.title}: ${k.body}`).join("\n")}`;
 
     const content = await callGroq({
       models: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
+      keyOffset: 1,
       messages: [
         { role: "system", content: debateSystem },
         { role: "user", content: ctx },
