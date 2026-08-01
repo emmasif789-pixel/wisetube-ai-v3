@@ -56,6 +56,7 @@ ${data.context.chapters.map((c) => `- ${c.title}: ${c.summary}`).join("\n")}`;
 
     const content = await callGroq({
       models: ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"],
+      keyOffset: 0,
       messages: [
         {
           role: "system",
