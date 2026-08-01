@@ -11,11 +11,13 @@ export function Debate({ report }: { report: LearningReport }) {
   const gen = useServerFn(generateDebate);
   const [result, setResult] = useState<DebateResult | null>(null);
   const [failed, setFailed] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
 
   // Generate in the background once the main report is ready — never blocks
-  // or slows the initial Learning Report render. If it fails, we simply
-  // don't render the card at all rather than surfacing an error.
+  // or slows the initial Learning Report render. On failure we still log
+  // the real reason and show a lightweight inline error instead of
+  // vanishing silently.
   useEffect(() => {
     let cancelled = false;
     gen({
@@ -31,8 +33,11 @@ export function Debate({ report }: { report: LearningReport }) {
       .then((res) => {
         if (!cancelled) setResult(res);
       })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[AI Debate] generation failed:", err);
+        setErrorMsg(err instanceof Error ? err.message : "AI Debate failed to generate.");
+        setFailed(true);
       });
     return () => {
       cancelled = true;
@@ -40,7 +45,23 @@ export function Debate({ report }: { report: LearningReport }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [report.videoId]);
 
-  if (failed || !result) return null;
+  if (failed) {
+    return (
+      <div className="p-2">
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10">
+            <Scale className="h-4 w-4 text-destructive" strokeWidth={2.2} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">AI Debate unavailable</p>
+            <p className="text-xs text-muted-foreground">{errorMsg}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!result) return null;
 
   const isDebate = result.mode === "debate";
 
