@@ -6,7 +6,7 @@
 
 Turn hours of video into minutes of understanding.
 
-[Live Demo](https://wistube-ai.vercel.app)
+[Live Demo] (https://wistube-ai-v3-dev.vercel.app)
 
 </div>
 
@@ -99,8 +99,6 @@ Try a real lecture. Then try a music video. Watch the score tell the difference.
 <div align="center">
 
 *Built by one person who believes learning should be measured by understanding — not watch time.*
-
-Built for the Prometheus July AI Challenge.
 
 **Watch less. Learn more.** *Instantly.*
 
