@@ -116,7 +116,12 @@ function MergePage() {
 
     try {
       setStage("analyzing");
-      const reports = await Promise.all(trimmed.map((u) => analyze({ data: { url: u } })));
+      // Spread each parallel analysis across a different Groq key from the
+      // start (instead of all of them racing for key[0] at once) — avoids
+      // tripping a single key's rate limit when merging several videos.
+      const reports = await Promise.all(
+        trimmed.map((u, i) => analyze({ data: { url: u, keyOffset: i } })),
+      );
       setStage("merging");
       const merged = await merge({
         data: {
