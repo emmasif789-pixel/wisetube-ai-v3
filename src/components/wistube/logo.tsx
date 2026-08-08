@@ -14,7 +14,7 @@ export function Logo({ className, showWordmark = true }: LogoProps) {
       </div>
       {showWordmark && (
         <span className="text-base font-semibold tracking-tight text-foreground">
-          WisTube <span className="text-muted-foreground font-normal">AI</span>
+          WiseTube <span className="text-muted-foreground font-normal">AI</span>
         </span>
       )}
     </div>
