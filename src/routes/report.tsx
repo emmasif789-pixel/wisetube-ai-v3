@@ -187,7 +187,7 @@ function ErrorScreen({ message }: { message: string }) {
               This video doesn't have captions
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
-              WisTube currently analyzes videos that include captions or transcripts.
+              WiseTube currently analyzes videos that include captions or transcripts.
             </p>
             <p className="mt-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Try another video, or use one of these examples
