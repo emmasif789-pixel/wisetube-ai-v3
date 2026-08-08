@@ -47,7 +47,7 @@ function Privacy() {
             />
             <div className="space-y-5 text-base leading-relaxed text-muted-foreground">
               <p>
-                WisTube AI only processes the YouTube content you submit —
+                WiseTube AI only processes the YouTube content you submit —
                 the video's transcript — in order to generate your learning
                 report, quiz, and other insights. We don't collect or store
                 more than what's needed to produce that analysis.
