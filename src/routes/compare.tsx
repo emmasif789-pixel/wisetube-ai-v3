@@ -183,7 +183,7 @@ function ComparePage() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-                        🏆 WisTube Recommendation
+                        🏆 WiseTube Recommendation
                       </p>
                       <p className="mt-1.5 text-base font-semibold leading-relaxed text-foreground">
                         {buildRecommendation(reportA!, reportB!)}
