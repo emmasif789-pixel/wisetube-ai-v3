@@ -2,15 +2,14 @@
 // means one place to trust for rate-limit handling, instead of three
 // separate copies that can drift out of sync.
 //
-// KEY ROTATION: set GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3,
-// GROQ_API_KEY_4, GROQ_API_KEY_5, GROQ_API_KEY_6, and GROQ_API_KEY_7
-// in your environment.
+// KEY ROTATION: set GROQ_API_KEY, GROQ_API_KEY_2, and GROQ_API_KEY_3
+// in your environment. (GROQ_API_KEY_4 through _7 are also supported if
+// you add more later, but aren't currently set.)
 //
 // IMPORTANT: capacity only multiplies if keys come from SEPARATE Groq
 // accounts — keys on the same account share one org-level daily token
-// budget. Current setup: 5 independent accounts across these 7 keys
-// (4 accounts from the original 5 keys, 1 new account for keys 6 & 7),
-// so real daily capacity is ~5x a single account.
+// budget. Current setup: 3 keys across 2 independent accounts, so real
+// daily capacity is ~2x a single account, not 3x.
 //
 // Only GROQ_API_KEY is required; the others are optional extras.
 function getApiKeys(): string[] {
