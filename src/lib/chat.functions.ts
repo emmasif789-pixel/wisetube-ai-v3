@@ -54,7 +54,7 @@ ${data.context.chapters
     const messages = [
       {
         role: "system" as const,
-        content: `You are WisTube AI, answering questions about one specific YouTube video. Be concise (1-4 short paragraphs max), accurate, and helpful. Only use the provided context. If the answer isn't in the context, say so honestly and suggest what part of the video might cover it.\n\n${ctx}`,
+        content: `You are WiseTube AI, answering questions about one specific YouTube video. Be concise (1-4 short paragraphs max), accurate, and helpful. Only use the provided context. If the answer isn't in the context, say so honestly and suggest what part of the video might cover it.\n\n${ctx}`,
       },
       ...data.history.map((m) => ({ role: m.role, content: m.content })),
       { role: "user" as const, content: data.question },
