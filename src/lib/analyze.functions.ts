@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { LearningReport, SkipSegmentKind } from "./report-data";
 import { callGroq } from "./groq-client";
+import { indexReport } from "./algolia-client";
 
 function extractVideoId(url: string): string | null {
   try {
@@ -224,7 +225,7 @@ async function generateReport(args: {
   transcript: string;
   durationSec: number;
 }): Promise<LearningReport> {
-  const system = `You are WisTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. The transcript may be in ANY language — always understand it correctly regardless of language, but ALWAYS write the entire report (title, executiveSummary, scoreExplanation, keyInsights, chapters, skipMap reasons — everything) in English, regardless of what language the video itself is in. Set the "language" field to the video's actual detected language (e.g. "Hindi", "Spanish"), even though your written report stays in English. Be honest — if the video is thin or filler-heavy, say so. This video is exactly ${args.durationSec} seconds long (${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")}). All numeric "start"/"end" fields (in chapters and skipMap) are in SECONDS and MUST be between 0 and ${args.durationSec} — never exceed this. CRITICAL: whenever you refer to a time in PROSE TEXT (executiveSummary, scoreExplanation, keyInsights, reason fields), you MUST write it as mm:ss (e.g. "5:37"), and that time MUST be less than or equal to ${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")} (the video's actual length). NEVER invent or estimate a timestamp — only reference times that correspond to an actual moment in the transcript provided below. Do not write a prose timestamp higher than the video's total duration under any circumstance. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
+  const system = `You are WiseTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. The transcript may be in ANY language — always understand it correctly regardless of language, but ALWAYS write the entire report (title, executiveSummary, scoreExplanation, keyInsights, chapters, skipMap reasons — everything) in English, regardless of what language the video itself is in. Set the "language" field to the video's actual detected language (e.g. "Hindi", "Spanish"), even though your written report stays in English. Be honest — if the video is thin or filler-heavy, say so. This video is exactly ${args.durationSec} seconds long (${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")}). All numeric "start"/"end" fields (in chapters and skipMap) are in SECONDS and MUST be between 0 and ${args.durationSec} — never exceed this. CRITICAL: whenever you refer to a time in PROSE TEXT (executiveSummary, scoreExplanation, keyInsights, reason fields), you MUST write it as mm:ss (e.g. "5:37"), and that time MUST be less than or equal to ${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")} (the video's actual length). NEVER invent or estimate a timestamp — only reference times that correspond to an actual moment in the transcript provided below. Do not write a prose timestamp higher than the video's total duration under any circumstance. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
 {
   "title": string,               // best guess of the video's title/topic
   "channel": string,             // best guess of channel/creator, or "Unknown"
@@ -359,10 +360,29 @@ export const analyzeVideo = createServerFn({ method: "POST" })
     const transcriptText = transcript
       .map((t) => `[${Math.floor(t.start)}] ${t.text}`)
       .join("\n");
-    return generateReport({
+    const report = await generateReport({
       url: data.url,
       videoId,
       transcript: transcriptText,
       durationSec,
     });
+
+    // Index for search — fire-and-forget, never blocks or fails the
+    // response the user is waiting on.
+    void indexReport({
+      objectID: report.videoId,
+      videoId: report.videoId,
+      url: report.url,
+      title: report.title,
+      channel: report.channel,
+      category: report.category,
+      worthWatching: report.worthWatching,
+      overallScore: report.overallScore,
+      executiveSummary: report.executiveSummary,
+      chapterTitles: report.chapters.map((c) => c.title),
+      keyInsightTitles: report.keyInsights.map((k) => k.title),
+      indexedAt: Date.now(),
+    });
+
+    return report;
   });
