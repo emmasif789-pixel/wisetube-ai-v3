@@ -79,10 +79,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "WisTube AI — Watch Less. Learn More." },
+      { title: "WiseTube AI — Watch Less. Learn More." },
       { name: "description", content: "Paste any YouTube link and get an AI-powered Learning Report that tells you if the video is worth your time." },
-      { name: "author", content: "WisTube AI" },
-      { property: "og:title", content: "WisTube AI — Watch Less. Learn More." },
+      { name: "author", content: "WiseTube AI" },
+      { property: "og:title", content: "WiseTube AI — Watch Less. Learn More." },
       { property: "og:description", content: "AI Learning Reports for YouTube videos. Decide what's worth watching before you press play." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
