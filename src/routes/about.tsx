@@ -45,7 +45,7 @@ function About() {
                   "'Instrument Serif', 'Cormorant Garamond', ui-serif, Georgia, serif",
               }}
             >
-              WisTube AI
+              WiseTube AI
             </span>
           </h1>
 
@@ -66,7 +66,7 @@ function About() {
                 videos searching for a few valuable insights.
               </p>
               <p>
-                WisTube AI transforms long videos into structured knowledge,
+                WiseTube AI transforms long videos into structured knowledge,
                 helping students, professionals, and lifelong learners
                 understand more in less time.
               </p>
