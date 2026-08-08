@@ -10,6 +10,7 @@ import {
   GitCompareArrows,
   HelpCircle,
   Dna,
+  Combine,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,6 +25,11 @@ const features: Feature[] = [
     icon: FileText,
     title: "Learning Report",
     description: "A complete AI analysis that reveals what the video is truly worth.",
+  },
+  {
+    icon: Combine,
+    title: "Merge",
+    description: "Paste 2–5 videos on the same topic and get one unified learning guide — common ground, conflicts, and a single roadmap.",
   },
   {
     icon: Clock,
@@ -69,6 +75,11 @@ const features: Feature[] = [
     icon: Dna,
     title: "Video DNA",
     description: "See the true composition of every video—from core ideas to filler.",
+  },
+  {
+    icon: Combine,
+    title: "Merge",
+    description: "Turn multiple experts into one master guide — shared insights, conflicting takes, and a single action plan.",
   },
 ];
 
