@@ -224,6 +224,7 @@ async function generateReport(args: {
   videoId: string;
   transcript: string;
   durationSec: number;
+  keyOffset?: number;
 }): Promise<LearningReport> {
   const system = `You are WiseTube AI, an expert learning analyst. Analyze the transcript of a YouTube video and produce a rigorous Learning Report as JSON. The transcript may be in ANY language — always understand it correctly regardless of language, but ALWAYS write the entire report (title, executiveSummary, scoreExplanation, keyInsights, chapters, skipMap reasons — everything) in English, regardless of what language the video itself is in. Set the "language" field to the video's actual detected language (e.g. "Hindi", "Spanish"), even though your written report stays in English. Be honest — if the video is thin or filler-heavy, say so. This video is exactly ${args.durationSec} seconds long (${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")}). All numeric "start"/"end" fields (in chapters and skipMap) are in SECONDS and MUST be between 0 and ${args.durationSec} — never exceed this. CRITICAL: whenever you refer to a time in PROSE TEXT (executiveSummary, scoreExplanation, keyInsights, reason fields), you MUST write it as mm:ss (e.g. "5:37"), and that time MUST be less than or equal to ${Math.floor(args.durationSec / 60)}:${String(args.durationSec % 60).padStart(2, "0")} (the video's actual length). NEVER invent or estimate a timestamp — only reference times that correspond to an actual moment in the transcript provided below. Do not write a prose timestamp higher than the video's total duration under any circumstance. Chapters must be in chronological order. Skip Map segments must cover the whole video contiguously (start=0, last end=${args.durationSec}, each segment.start = previous.end). Return JSON only, matching this shape exactly:
 {
@@ -263,6 +264,7 @@ Return the JSON report now.`;
     ],
     maxTokens: MAX_COMPLETION_TOKENS,
     temperature: 0.2,
+    keyOffset: args.keyOffset,
   });
 
   let parsed: unknown;
@@ -350,7 +352,9 @@ Return the JSON report now.`;
 }
 
 export const analyzeVideo = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => z.object({ url: z.string().min(1) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ url: z.string().min(1), keyOffset: z.number().optional() }).parse(input),
+  )
   .handler(async ({ data }): Promise<LearningReport> => {
     const videoId = extractVideoId(data.url);
     if (!videoId) throw new Error("That doesn't look like a valid YouTube URL.");
@@ -365,6 +369,7 @@ export const analyzeVideo = createServerFn({ method: "POST" })
       videoId,
       transcript: transcriptText,
       durationSec,
+      keyOffset: data.keyOffset,
     });
 
     // Index for search — fire-and-forget, never blocks or fails the
