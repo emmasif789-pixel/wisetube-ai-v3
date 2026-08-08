@@ -47,7 +47,7 @@ function Terms() {
             />
             <div className="space-y-5 text-base leading-relaxed text-muted-foreground">
               <p>
-                WisTube AI is an original product concept independently
+                WiseTube AI is an original product concept independently
                 designed and developed to help people learn more efficiently
                 from YouTube videos through AI-powered learning tools.
               </p>
@@ -58,14 +58,14 @@ function Terms() {
                 necessary.
               </p>
               <p>
-                By using WisTube AI, you agree to use the platform
+                By using WiseTube AI, you agree to use the platform
                 responsibly. All AI-generated content is intended to enhance
                 learning, not replace personal judgment or the original
                 creator's work.
               </p>
               <p className="text-foreground">
-                © {new Date().getFullYear()} WisTube AI. All rights reserved.
-                The WisTube AI branding, design, and original implementation
+                © {new Date().getFullYear()} WiseTube AI. All rights reserved.
+                The WiseTube AI branding, design, and original implementation
                 are the intellectual property of its creator.
               </p>
             </div>
