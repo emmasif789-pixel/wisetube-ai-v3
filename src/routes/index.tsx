@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components/wistube/navbar";
 import { Hero } from "@/components/wistube/hero";
+import { ExploreSearch } from "@/components/wistube/explore-search";
 import { Features } from "@/components/wistube/features";
 import { Footer } from "@/components/wistube/footer";
 import { Aurora } from "@/components/wistube/aurora";
@@ -15,6 +16,7 @@ function Index() {
       <Aurora />
       <Navbar />
       <Hero />
+      <ExploreSearch />
       <Features />
       <Footer />
     </main>
