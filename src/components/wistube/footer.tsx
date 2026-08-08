@@ -69,7 +69,7 @@ export function Footer() {
         </div>
         <div className="mt-12 flex flex-col items-start justify-between gap-2 border-t border-border/60 pt-6 sm:flex-row sm:items-center">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} WisTube AI. All rights reserved.
+            © {new Date().getFullYear()} WiseTube AI. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
             Made for people who value their time.
