@@ -29,8 +29,18 @@ const contextSchema = z.object({
 });
 
 const debateSchema = z.object({
-  mainViewpoint: z.array(z.string()).min(2).max(4),
-  counterargument: z.array(z.string()).min(2).max(4),
+  // The model is told "2-4 bullet points" but doesn't always comply —
+  // rather than hard-failing the whole response over a count mismatch,
+  // validate the minimum (a genuinely empty/thin response should still
+  // fail) then truncate any overflow instead of rejecting it.
+  mainViewpoint: z
+    .array(z.string())
+    .min(2)
+    .transform((arr) => arr.slice(0, 4)),
+  counterargument: z
+    .array(z.string())
+    .min(2)
+    .transform((arr) => arr.slice(0, 4)),
   // The model occasionally returns this as an array of sentences instead of
   // one joined string, even though the prompt asks for a string. Accept
   // either shape and normalize to a string rather than failing validation.
