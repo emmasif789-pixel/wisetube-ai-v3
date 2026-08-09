@@ -18,7 +18,7 @@ WisTube AI reads the entire video and tells you the truth: what it's actually ab
 What Makes This Different
 Most AI video tools summarize. A summary of a bad video is still a bad video, just shorter.
 
-WisTube judges. A video with 200 million views and a video with 200 views get held to the same standard. Feed it a real lecture — it scores it 4.5/5, "Watch." Feed it a music video with no educational content — it scores it 1.5/5, "Skip it," and shows exactly why.
+WisTube judges. A video with 200 million views and a video with 200 views get held to the same standard. Feed it a real lecture — it scores it 9.5/10, "Watch." Feed it a music video with no educational content — it scores it 1.5/10, "Skip it," and shows exactly why.
 
 We don't believe every video deserves your time. AI should be honest enough to say so.
 
@@ -30,7 +30,7 @@ Take notes manually	AI-generated Learning Report
 Forget most of it tomorrow	5-question quiz reinforces it
 Watch one video at a time	Compare two videos side by side
 Features
-Learning Report — honest 0–5 score across content depth, clarity, accuracy, structure, practical value, and beginner-friendliness
+Learning Report — honest 0–10 score across content depth, clarity, accuracy, structure, practical value, and beginner-friendliness
 Skip Map — the video's timeline color-coded watch / optional / skip
 Learning Timeline — chaptered, clickable, jumps the player to the moment that matters
 Ask AI — a real conversation about the video's content, grounded in its full transcript
