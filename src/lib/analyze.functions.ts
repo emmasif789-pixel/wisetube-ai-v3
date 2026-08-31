@@ -148,11 +148,14 @@ function sanitizeTimestamps(
 }
 
 // A full analysis request (system prompt + sampled transcript + reserved
-// completion tokens) runs ~6,500 tokens on llama-3.3-70b-versatile, which
-// has a 12,000 TPM / 100,000 TPD budget on the free tier — the only model
-// with enough headroom for this call size (llama-3.1-8b-instant's 6,000 TPM
-// budget is too small for it). See groq-client.ts for key rotation, which
-// is the real lever for scaling total daily capacity beyond one key's cap.
+// completion tokens) runs ~6,500 tokens. llama-3.3-70b-versatile and
+// llama-3.1-8b-instant were deprecated by Groq (June 2026); we now use
+// openai/gpt-oss-120b, which has an 8,000 TPM / 200,000 TPD budget on the
+// free tier — enough headroom for this call size. Note both gpt-oss-120b
+// and gpt-oss-20b share the same free-tier TPM/TPD caps now (unlike the old
+// pair), so there's no rate-limit reason to prefer one over the other here.
+// See groq-client.ts for key rotation, which is the real lever for scaling
+// total daily capacity beyond one key's cap.
 const MAX_COMPLETION_TOKENS = 2000;
 const MAX_TRANSCRIPT_CHARS = 16000;
 
@@ -255,7 +258,7 @@ ${transcriptForPrompt}
 Return the JSON report now.`;
 
   const content = await callGroq({
-    models: ["llama-3.3-70b-versatile"],
+    models: ["openai/gpt-oss-120b"],
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
