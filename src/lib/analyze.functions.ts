@@ -55,7 +55,12 @@ export async function fetchTranscript(videoId: string): Promise<TranscriptSegmen
   });
 
   if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`youtube-transcript.io error: status=${res.status} body=${body.slice(0, 500)}`);
     if (res.status === 429) throw new Error("Transcript service is busy right now. Please try again in a moment.");
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("Transcript service rejected the request (invalid or expired API key). Please check TRANSCRIPT_API_KEY.");
+    }
     throw new Error("Could not load this video. Please try another URL.");
   }
 
