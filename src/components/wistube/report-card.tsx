@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { FileText } from "lucide-react";
 import type { LearningReport } from "@/lib/report-data";
 import { CircularRing } from "./circular-ring";
 
@@ -30,8 +30,8 @@ export function ReportCard({
       />
       <div className="relative">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+          <FileText className="h-3.5 w-3.5 text-primary" />
+          <p className="text-xs font-semibold text-primary">
             Your Learning Report
           </p>
         </div>

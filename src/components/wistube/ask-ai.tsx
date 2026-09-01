@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Sparkles } from "lucide-react";
+import { MessagesSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { chatAboutVideo } from "@/lib/chat.functions";
@@ -80,7 +80,7 @@ export function AskAi({ report }: { report: LearningReport }) {
         {messages.length === 0 && !loading && (
           <div className="py-8 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <MessagesSquare className="h-5 w-5 text-primary" />
             </div>
             <p className="mx-auto mt-4 max-w-xs text-sm text-muted-foreground">
               Ask any question about this video — timelines, takeaways, or examples.
@@ -132,7 +132,6 @@ export function AskAi({ report }: { report: LearningReport }) {
               className="flex justify-start"
             >
               <div className="inline-flex items-center gap-2 rounded-2xl border border-border/60 bg-secondary/40 px-4 py-2.5 text-sm text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" />
                 <span className="inline-flex gap-1">
                   <Dot delay={0} />
                   <Dot delay={0.15} />

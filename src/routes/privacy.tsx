@@ -14,10 +14,7 @@ function Privacy() {
       <Navbar />
       <section className="relative py-28 sm:py-36">
         <div className="mx-auto max-w-3xl px-6">
-          <p className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-primary backdrop-blur">
-            <span className="h-1 w-1 rounded-full bg-primary" />
-            Legal
-          </p>
+          <p className="text-sm font-medium text-primary">Legal</p>
           <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.03em] sm:text-5xl md:text-6xl">
             <span
               className="bg-clip-text text-transparent"

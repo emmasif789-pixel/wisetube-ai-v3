@@ -170,8 +170,8 @@ function MergePage() {
           </Button>
 
           <div className="mx-auto max-w-2xl text-center">
-            <p className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-primary backdrop-blur">
-              <GitMerge className="h-3 w-3" />
+            <p className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+              <GitMerge className="h-3.5 w-3.5" />
               Merge
             </p>
             <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.03em] sm:text-5xl">
@@ -323,7 +323,7 @@ function SectionCard({
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10">
             <Icon className="h-4 w-4 text-primary" />
           </div>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+          <h2 className="text-sm font-semibold text-foreground">
             {title}
           </h2>
         </div>
@@ -500,7 +500,7 @@ function Stat({
       >
         {value}
       </p>
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }

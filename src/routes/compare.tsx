@@ -98,10 +98,7 @@ function ComparePage() {
           </Button>
 
           <div className="mx-auto max-w-2xl text-center">
-            <p className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/60 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-primary backdrop-blur">
-              <span className="h-1 w-1 rounded-full bg-primary" />
-              Compare
-            </p>
+            <p className="text-sm font-medium text-primary">Compare</p>
             <h1 className="mt-5 text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.03em] sm:text-5xl">
               <span
                 className="bg-clip-text text-transparent"
@@ -182,7 +179,7 @@ function ComparePage() {
                       <Trophy className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                      <p className="text-xs font-semibold text-primary">
                         🏆 WiseTube Recommendation
                       </p>
                       <p className="mt-1.5 text-base font-semibold leading-relaxed text-foreground">
@@ -248,7 +245,7 @@ function VideoInputCard({
       className="rounded-2xl border border-border/60 bg-card/70 p-6 backdrop-blur-xl"
       style={{ boxShadow: "var(--shadow-card)" }}
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-primary">{label}</p>
+      <p className="text-xs font-semibold text-primary">{label}</p>
       <div className="mt-3 flex items-center gap-2 rounded-xl border border-border/70 bg-background/60 px-3 transition-colors focus-within:border-primary/50">
         <Youtube className="h-4 w-4 shrink-0 text-muted-foreground" />
         <input

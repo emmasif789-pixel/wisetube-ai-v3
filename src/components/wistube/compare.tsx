@@ -144,7 +144,7 @@ export function CompareCard({
       style={winner ? { boxShadow: "var(--shadow-glow)" } : undefined}
     >
       {winner && (
-        <span className="absolute left-4 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-background/90 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary backdrop-blur">
+        <span className="absolute left-4 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-background/90 px-2.5 py-0.5 text-[10px] font-medium text-primary backdrop-blur">
           <Trophy className="h-3 w-3" /> Better pick
         </span>
       )}
@@ -168,7 +168,7 @@ export function CompareCard({
 
       <div className="flex flex-1 flex-col p-5 pt-4">
         <div className="flex-1">
-          <p className="truncate text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             {report.channel}
           </p>
           <h3 className="mt-1 line-clamp-2 text-base font-semibold tracking-tight text-foreground">
@@ -223,7 +223,7 @@ export function Stat({
 }) {
   return (
     <div className="rounded-lg border border-border/60 bg-background/40 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <div className="text-[10px] text-muted-foreground">
         {label}
       </div>
       <div className="mt-0.5 text-sm font-medium">{value}</div>
