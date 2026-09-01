@@ -10,7 +10,6 @@ import {
   ChevronDown,
   Clock,
   Dna,
-  FileText,
   Gauge,
   GitCompare,
   HelpCircle,
@@ -18,6 +17,7 @@ import {
   Map as MapIcon,
   MessagesSquare,
   Play,
+  Sparkles,
   Youtube,
 } from "lucide-react";
 import { z } from "zod";
@@ -189,7 +189,7 @@ function ErrorScreen({ message }: { message: string }) {
             <p className="mt-3 text-sm text-muted-foreground">
               WiseTube currently analyzes videos that include captions or transcripts.
             </p>
-            <p className="mt-6 text-xs font-medium text-muted-foreground">
+            <p className="mt-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Try another video, or use one of these examples
             </p>
             <div className="mt-4 space-y-2">
@@ -241,15 +241,21 @@ function LoadingScreen({ message, progress }: { message: string; progress: numbe
       />
       <div className="mx-auto max-w-3xl px-6">
         <div className="text-center">
-          <p className="mb-3 text-xs font-medium text-muted-foreground">
+          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
             Generating your Learning Report
-          </p>
-          <h1 className="text-balance font-serif text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-            {message}
+          </div>
+          <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: "var(--gradient-text)" }}
+            >
+              {message}
+            </span>
           </h1>
           <div className="mx-auto mt-8 max-w-md">
             <Progress value={progress} className="h-1.5" />
-            <p className="mt-2 font-mono text-xs text-muted-foreground">
+            <p className="mt-2 text-xs text-muted-foreground">
               {Math.round(progress)}%
             </p>
           </div>
@@ -292,9 +298,9 @@ const VERDICT_META: Record<
   LearningReport["worthWatching"],
   { label: string; dot: string }
 > = {
-  Yes: { label: "Watch in full", dot: "bg-[var(--verdict-watch)]" },
+  Yes: { label: "Watch in full", dot: "bg-emerald-500" },
   Skim: { label: "Watch only key sections", dot: "bg-amber-400" },
-  No: { label: "Skip it", dot: "bg-[var(--verdict-skip)]" },
+  No: { label: "Skip it", dot: "bg-red-500" },
 };
 
 const DNA_COLOR_MAP: Record<string, string> = {
@@ -391,10 +397,10 @@ function Report({
         <ElevatedCard interactive>
           <div className="flex flex-col-reverse gap-6 p-8 lg:flex-row lg:items-start">
             <div className="flex-1">
-              <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground/70">
+              <p className="text-xs font-medium uppercase tracking-wider text-primary">
                 Learning Report
               </p>
-              <h1 className="mt-2 font-serif text-[32px] font-medium leading-tight tracking-tight text-foreground sm:text-4xl">
+              <h1 className="mt-2 text-[32px] font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
                 {report.title}
               </h1>
 
@@ -541,13 +547,17 @@ function Report({
               const optionalCount = report.skipMap.filter((s) => s.kind === "optional").length;
               const skipCount = report.skipMap.filter((s) => s.kind === "skip").length;
               return (
-                <div className="mb-4 flex flex-wrap gap-x-5 gap-y-1.5 text-xs">
-                  <span className="font-medium text-foreground">{report.skipMap.length} sections</span>
-                  <span className="text-[var(--verdict-watch)]">{watchCount} watch</span>
-                  <span className="text-amber-500">{optionalCount} optional</span>
-                  <span className="text-[var(--verdict-skip)]">{skipCount} skip</span>
+                <p className="mb-4 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{report.skipMap.length} Sections</span>
+                  {" • "}
+                  <span className="text-emerald-500">{watchCount} Watch</span>
+                  {" • "}
+                  <span className="text-amber-500">{optionalCount} Optional</span>
+                  {" • "}
+                  <span className="text-red-400">{skipCount} Skip</span>
+                  {" • "}
                   <span className="font-medium text-foreground">{minutesSaved} min saved</span>
-                </div>
+                </p>
               );
             })()}
 
@@ -616,19 +626,15 @@ function Report({
                     >
                       <div className="flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="flex items-center gap-2 text-sm font-medium text-foreground">
-                            <span
-                              className={cn("inline-block h-2 w-2 shrink-0 rounded-full", segmentDotClass(s.kind))}
-                              aria-hidden
-                            />
-                            {s.label}
+                          <p className="text-sm font-medium text-foreground">
+                            {segmentEmoji(s.kind)} {s.label}
                             {s.isBestMoment && (
-                              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                                Best moment
+                              <span className="ml-2 text-xs font-medium text-amber-500">
+                                ⭐ Best Moment
                               </span>
                             )}
                           </p>
-                          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                          <span className="text-xs tabular-nums text-muted-foreground">
                             {formatTimestamp(s.start)} – {formatTimestamp(s.end)}
                           </span>
                         </div>
@@ -646,10 +652,10 @@ function Report({
         </ElevatedCard>
 
         {/* Executive Summary — learn it in 3-5 minutes, with AI Listening Mode */}
-        <div className="mt-12 mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
-          <div className="flex items-center gap-2.5">
-            <FileText className="h-4 w-4 text-primary" strokeWidth={1.8} />
-            <h2 className="font-serif text-lg font-medium text-foreground">
+        <div className="mt-12 mb-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
               Executive Summary
             </h2>
           </div>
@@ -762,8 +768,8 @@ function Report({
         {/* Compare Videos — badge + glow border so it doesn't get scrolled past */}
         <SectionTitle icon={GitCompare}>
           Compare Videos
-          <span className="ml-2 rounded-full bg-primary/15 px-2 py-0.5 font-sans text-[10px] font-semibold text-primary">
-            New
+          <span className="ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary">
+            🔥 Try it
           </span>
         </SectionTitle>
         <ElevatedCard interactive glow>
@@ -826,7 +832,7 @@ function SummaryBlock({
 }) {
   return (
     <div>
-      <p className="text-xs font-semibold text-primary">
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary">
         {label}
       </p>
       <p className="mt-2 text-sm leading-relaxed text-foreground/90">
@@ -837,19 +843,24 @@ function SummaryBlock({
 }
 
 function segmentBgClass(kind: SkipSegmentKind): string {
-  if (kind === "watch") return "bg-[var(--verdict-watch)]/80";
+  if (kind === "watch") return "bg-emerald-500/80";
   if (kind === "optional") return "bg-amber-400/80";
-  return "bg-[var(--verdict-skip)]/80";
+  return "bg-red-500/80";
 }
 function segmentDotClass(kind: SkipSegmentKind): string {
-  if (kind === "watch") return "bg-[var(--verdict-watch)]";
+  if (kind === "watch") return "bg-emerald-500";
   if (kind === "optional") return "bg-amber-400";
-  return "bg-[var(--verdict-skip)]";
+  return "bg-red-500";
 }
 function segmentBorderClass(kind: SkipSegmentKind): string {
-  if (kind === "watch") return "border-l-[var(--verdict-watch)]";
+  if (kind === "watch") return "border-l-emerald-500";
   if (kind === "optional") return "border-l-amber-400";
-  return "border-l-[var(--verdict-skip)]";
+  return "border-l-red-400";
+}
+function segmentEmoji(kind: SkipSegmentKind): string {
+  if (kind === "watch") return "🟢";
+  if (kind === "optional") return "🟡";
+  return "🔴";
 }
 
 /**
@@ -889,15 +900,15 @@ function SectionTitle({
   children,
   right,
 }: {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
   right?: React.ReactNode;
 }) {
   return (
-    <div className="mt-12 mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
-      <div className="flex items-center gap-2.5">
-        <Icon className="h-4 w-4 text-primary" strokeWidth={1.8} />
-        <h2 className="font-serif text-lg font-medium text-foreground">
+    <div className="mt-12 mb-4 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           {children}
         </h2>
       </div>

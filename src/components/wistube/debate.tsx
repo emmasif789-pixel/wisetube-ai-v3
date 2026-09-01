@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, Compass, Scale, Split, Wrench } from "lucide-react";
+import { ChevronDown, Scale, Split, Sparkles, Wrench } from "lucide-react";
 import { generateDebate, type DebateResult } from "@/lib/debate.functions";
 import type { LearningReport } from "@/lib/report-data";
 import { CopyButton } from "@/components/wistube/copy-button";
@@ -163,7 +163,7 @@ export function Debate({ report }: { report: LearningReport }) {
               {isDebate ? (
                 <>
                   <DebateSection
-                    icon={Compass}
+                    icon={Sparkles}
                     label="Main Viewpoint"
                     accent="emerald"
                     points={result.mainViewpoint}
@@ -263,7 +263,7 @@ function DebateSection({
         <div className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md", a.iconBg)}>
           <Icon className={cn("h-3.5 w-3.5", a.iconText)} strokeWidth={2.2} />
         </div>
-        <p className="text-xs font-semibold text-foreground">
+        <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
           {label}
         </p>
       </div>
@@ -302,7 +302,7 @@ function ConclusionSection({
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/15">
           <Scale className="h-3.5 w-3.5 text-primary" strokeWidth={2.2} />
         </div>
-        <p className="text-xs font-semibold text-foreground">
+        <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
           {label}
         </p>
       </div>

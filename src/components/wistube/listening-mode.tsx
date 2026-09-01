@@ -144,7 +144,7 @@ export function ListenPanel({
                 <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
                   {sections.map((s, si) => (
                     <p key={si} className="text-sm leading-relaxed">
-                      <span className="mr-1.5 text-xs font-semibold text-primary/70">
+                      <span className="mr-1.5 text-xs font-semibold uppercase tracking-wider text-primary/70">
                         {s.label}:
                       </span>
                       {state.flat

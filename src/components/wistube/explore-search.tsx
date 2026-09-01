@@ -34,7 +34,7 @@ export function ExploreSearch() {
   return (
     <section className="relative mx-auto max-w-2xl px-6 pb-4">
       <div className="mb-4 text-center">
-        <p className="text-xs font-medium text-muted-foreground/60">
+        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground/60">
           Search Previously Analyzed Videos
         </p>
       </div>

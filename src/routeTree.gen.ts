@@ -9,227 +9,48 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as CompareRouteImport } from './routes/compare'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as MergeRouteImport } from './routes/merge'
-import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReportRouteImport } from './routes/report'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as ApiAiAnalyzeRouteImport } from './routes/api/ai/analyze'
-import { Route as ApiAiChatRouteImport } from './routes/api/ai/chat'
-import { Route as ApiAiQuizRouteImport } from './routes/api/ai/quiz'
-import { Route as ApiAiTranscriptRouteImport } from './routes/api/ai/transcript'
+import { Route as IndexRouteImport } from './routes/index'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompareRoute = CompareRouteImport.update({
-  id: '/compare',
-  path: '/compare',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MergeRoute = MergeRouteImport.update({
-  id: '/merge',
-  path: '/merge',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAiAnalyzeRoute = ApiAiAnalyzeRouteImport.update({
-  id: '/api/ai/analyze',
-  path: '/api/ai/analyze',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAiChatRoute = ApiAiChatRouteImport.update({
-  id: '/api/ai/chat',
-  path: '/api/ai/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAiQuizRoute = ApiAiQuizRouteImport.update({
-  id: '/api/ai/quiz',
-  path: '/api/ai/quiz',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAiTranscriptRoute = ApiAiTranscriptRouteImport.update({
-  id: '/api/ai/transcript',
-  path: '/api/ai/transcript',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/compare': typeof CompareRoute
-  '/contact': typeof ContactRoute
-  '/merge': typeof MergeRoute
-  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
-  '/terms': typeof TermsRoute
-  '/api/ai/analyze': typeof ApiAiAnalyzeRoute
-  '/api/ai/chat': typeof ApiAiChatRoute
-  '/api/ai/quiz': typeof ApiAiQuizRoute
-  '/api/ai/transcript': typeof ApiAiTranscriptRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/compare': typeof CompareRoute
-  '/contact': typeof ContactRoute
-  '/merge': typeof MergeRoute
-  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
-  '/terms': typeof TermsRoute
-  '/api/ai/analyze': typeof ApiAiAnalyzeRoute
-  '/api/ai/chat': typeof ApiAiChatRoute
-  '/api/ai/quiz': typeof ApiAiQuizRoute
-  '/api/ai/transcript': typeof ApiAiTranscriptRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/compare': typeof CompareRoute
-  '/contact': typeof ContactRoute
-  '/merge': typeof MergeRoute
-  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
-  '/terms': typeof TermsRoute
-  '/api/ai/analyze': typeof ApiAiAnalyzeRoute
-  '/api/ai/chat': typeof ApiAiChatRoute
-  '/api/ai/quiz': typeof ApiAiQuizRoute
-  '/api/ai/transcript': typeof ApiAiTranscriptRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/about'
-    | '/compare'
-    | '/contact'
-    | '/merge'
-    | '/privacy'
-    | '/report'
-    | '/terms'
-    | '/api/ai/analyze'
-    | '/api/ai/chat'
-    | '/api/ai/quiz'
-    | '/api/ai/transcript'
+  fullPaths: '/' | '/report'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/about'
-    | '/compare'
-    | '/contact'
-    | '/merge'
-    | '/privacy'
-    | '/report'
-    | '/terms'
-    | '/api/ai/analyze'
-    | '/api/ai/chat'
-    | '/api/ai/quiz'
-    | '/api/ai/transcript'
-  id:
-    | '__root__'
-    | '/'
-    | '/about'
-    | '/compare'
-    | '/contact'
-    | '/merge'
-    | '/privacy'
-    | '/report'
-    | '/terms'
-    | '/api/ai/analyze'
-    | '/api/ai/chat'
-    | '/api/ai/quiz'
-    | '/api/ai/transcript'
+  to: '/' | '/report'
+  id: '__root__' | '/' | '/report'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
-  CompareRoute: typeof CompareRoute
-  ContactRoute: typeof ContactRoute
-  MergeRoute: typeof MergeRoute
-  PrivacyRoute: typeof PrivacyRoute
   ReportRoute: typeof ReportRoute
-  TermsRoute: typeof TermsRoute
-  ApiAiAnalyzeRoute: typeof ApiAiAnalyzeRoute
-  ApiAiChatRoute: typeof ApiAiChatRoute
-  ApiAiQuizRoute: typeof ApiAiQuizRoute
-  ApiAiTranscriptRoute: typeof ApiAiTranscriptRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compare': {
-      id: '/compare'
-      path: '/compare'
-      fullPath: '/compare'
-      preLoaderRoute: typeof CompareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/merge': {
-      id: '/merge'
-      path: '/merge'
-      fullPath: '/merge'
-      preLoaderRoute: typeof MergeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/report': {
       id: '/report'
       path: '/report'
@@ -237,39 +58,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai/analyze': {
-      id: '/api/ai/analyze'
-      path: '/api/ai/analyze'
-      fullPath: '/api/ai/analyze'
-      preLoaderRoute: typeof ApiAiAnalyzeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai/chat': {
-      id: '/api/ai/chat'
-      path: '/api/ai/chat'
-      fullPath: '/api/ai/chat'
-      preLoaderRoute: typeof ApiAiChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai/quiz': {
-      id: '/api/ai/quiz'
-      path: '/api/ai/quiz'
-      fullPath: '/api/ai/quiz'
-      preLoaderRoute: typeof ApiAiQuizRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ai/transcript': {
-      id: '/api/ai/transcript'
-      path: '/api/ai/transcript'
-      fullPath: '/api/ai/transcript'
-      preLoaderRoute: typeof ApiAiTranscriptRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -277,28 +70,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  CompareRoute: CompareRoute,
-  ContactRoute: ContactRoute,
-  MergeRoute: MergeRoute,
-  PrivacyRoute: PrivacyRoute,
   ReportRoute: ReportRoute,
-  TermsRoute: TermsRoute,
-  ApiAiAnalyzeRoute: ApiAiAnalyzeRoute,
-  ApiAiChatRoute: ApiAiChatRoute,
-  ApiAiQuizRoute: ApiAiQuizRoute,
-  ApiAiTranscriptRoute: ApiAiTranscriptRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

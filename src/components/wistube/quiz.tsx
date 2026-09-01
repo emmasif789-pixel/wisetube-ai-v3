@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, Clock, HelpCircle, Loader2, RotateCcw, Target, X } from "lucide-react";
+import { Check, Clock, HelpCircle, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { generateQuiz, type QuizQuestion } from "@/lib/quiz.functions";
@@ -150,7 +150,7 @@ export function Quiz({ report }: { report: LearningReport }) {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="p-6 text-center"
       >
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Your Score
         </p>
         <motion.div
@@ -191,7 +191,7 @@ export function Quiz({ report }: { report: LearningReport }) {
           Question {index + 1} of {questions.length}
         </span>
         <span className="flex items-center gap-1">
-          <Target className="h-3 w-3 text-primary" />
+          <Sparkles className="h-3 w-3 text-primary" />
           Score {score}
         </span>
       </div>
